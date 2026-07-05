@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropper.js/1.6.1/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropper.js/1.6.1/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 
@@ -257,14 +259,15 @@
     flex-direction:column;
     gap:10px;
     transition:transform .25s ease;
+    cursor:pointer;
   }
   .memory-card:hover{ transform:translateY(-4px); }
 
   .memory-card img{
     width:100%;
+    aspect-ratio:4/3;
     border-radius:14px;
     object-fit:cover;
-    max-height:180px;
   }
 
   .memory-date{
@@ -406,6 +409,67 @@
     font-size:13px;
   }
 
+  /* ---------- Fotoğraf kırpma alanı ---------- */
+  .crop-wrap{
+    margin-top:10px;
+    width:100%;
+    height:260px;
+    border-radius:14px;
+    overflow:hidden;
+    background:#000;
+  }
+  .crop-wrap img{
+    display:block;
+    max-width:100%;
+  }
+
+  #currentImagePreview{
+    width:100%;
+    aspect-ratio:4/3;
+    object-fit:cover;
+    border-radius:12px;
+    margin-top:10px;
+  }
+
+  /* ---------- Anı detay modalı ---------- */
+  .detail-modal{
+    max-width:480px;
+    padding:0;
+    overflow:hidden;
+    position:relative;
+  }
+  .detail-modal img{
+    width:100%;
+    max-height:60vh;
+    object-fit:contain;
+    background:#000;
+    display:block;
+  }
+  .detail-modal .detail-body{
+    padding:22px 26px 26px;
+  }
+  .detail-title{
+    font-size:20px;
+    margin-bottom:4px;
+  }
+  .detail-close{
+    position:absolute;
+    top:14px;
+    right:14px;
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    border:none;
+    background:rgba(0,0,0,.45);
+    color:#fff;
+    font-size:16px;
+    cursor:pointer;
+    z-index:5;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
   .modal-actions{
     display:flex;
     gap:10px;
@@ -519,13 +583,29 @@
       <div class="field">
         <label for="memImgFile">Fotoğraf (opsiyonel)</label>
         <input type="file" id="memImgFile" accept="image/*">
-        <img id="memImgPreview" alt="" style="display:none; margin-top:10px; width:100%; max-height:160px; object-fit:cover; border-radius:12px;">
+        <img id="currentImagePreview" alt="" style="display:none;">
+        <div class="crop-wrap" id="cropWrap" style="display:none;">
+          <img id="cropImage" alt="">
+        </div>
       </div>
       <div class="modal-actions">
         <button class="btn-cancel" id="cancelBtn">Vazgeç</button>
         <button class="btn-save" id="saveBtn">Kaydet</button>
       </div>
       <div class="modal-note">Bu anı ikimizin de göreceği ortak listeye eklenecek</div>
+    </div>
+  </div>
+
+  <!-- Anı detay modalı -->
+  <div class="modal-overlay" id="detailModalOverlay">
+    <div class="modal detail-modal">
+      <button class="detail-close" id="detailCloseBtn" aria-label="Kapat">✕</button>
+      <img id="detailImage" alt="" style="display:none;">
+      <div class="detail-body">
+        <div class="memory-date" id="detailDate"></div>
+        <div class="memory-title detail-title" id="detailTitle"></div>
+        <div class="memory-desc" id="detailDesc"></div>
+      </div>
     </div>
   </div>
 
@@ -624,7 +704,6 @@
         ${m.image_url ? `<img src="${escapeHtml(m.image_url)}" alt="" onerror="this.remove()">` : ''}
         <div class="memory-date">${formatDate(m.memory_date)} <span class="memory-ago">· ${timeAgo(m.memory_date)}</span></div>
         <div class="memory-title">${escapeHtml(m.title)}</div>
-        ${m.description ? `<div class="memory-desc">${escapeHtml(m.description)}</div>` : ''}
         <div class="memory-actions">
           <button class="icon-btn" data-action="edit" data-id="${m.id}" aria-label="Düzenle">✏️</button>
           <button class="icon-btn" data-action="delete" data-id="${m.id}" aria-label="Sil">🗑️</button>
@@ -691,40 +770,22 @@
     fetchMemories();
   }
 
-  // ---------- Fotoğraf: yeniden boyutlandırma + Supabase Storage'a yükleme ----------
+  // ---------- Fotoğraf: kırpma + Supabase Storage'a yükleme ----------
   const STORAGE_BUCKET = "memory-photos"; // Supabase'de oluşturacağın bucket adıyla aynı olmalı
 
-  function resizeImage(file, maxWidth = 1600, quality = 0.82){
+  function getCroppedBlob(quality = 0.85, maxWidth = 1200){
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          let { width, height } = img;
-          if(width > maxWidth){
-            height = Math.round(height * (maxWidth / width));
-            width = maxWidth;
-          }
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-          canvas.toBlob((blob) => {
-            if(blob) resolve(blob); else reject(new Error('Görsel işlenemedi'));
-          }, 'image/jpeg', quality);
-        };
-        img.onerror = reject;
-        img.src = e.target.result;
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+      if(!cropper){ resolve(null); return; }
+      const canvas = cropper.getCroppedCanvas({ maxWidth, imageSmoothingQuality: 'high' });
+      canvas.toBlob((blob) => {
+        if(blob) resolve(blob); else reject(new Error('Görsel işlenemedi'));
+      }, 'image/jpeg', quality);
     });
   }
 
-  async function uploadImage(file){
+  async function uploadImage(blob){
     if(!supabaseClient) return { error: "Supabase bağlı değil" };
     try{
-      const blob = await resizeImage(file);
       const fileName = `${crypto.randomUUID()}.jpg`;
       const { error: uploadError } = await supabaseClient
         .storage
@@ -747,15 +808,29 @@
   const openModalBtn = document.getElementById('openModalBtn');
   const cancelBtn = document.getElementById('cancelBtn');
   const saveBtn = document.getElementById('saveBtn');
+  const memImgFile = document.getElementById('memImgFile');
+  const currentImagePreview = document.getElementById('currentImagePreview');
+  const cropWrap = document.getElementById('cropWrap');
+  const cropImage = document.getElementById('cropImage');
 
   let editingId = null;
   let existingImageUrl = null;
+  let cropper = null;
+
+  function destroyCropper(){
+    if(cropper){
+      cropper.destroy();
+      cropper = null;
+    }
+    cropWrap.style.display = 'none';
+  }
 
   openModalBtn.addEventListener('click', () => {
     editingId = null;
     existingImageUrl = null;
     document.getElementById('modalTitle').textContent = 'Yeni bir anı ekle 💗';
     saveBtn.textContent = 'Kaydet';
+    currentImagePreview.style.display = 'none';
     modalOverlay.classList.add('open');
   });
   cancelBtn.addEventListener('click', closeModal);
@@ -765,10 +840,15 @@
 
   memoriesGrid.addEventListener('click', (e) => {
     const btn = e.target.closest('.icon-btn');
-    if(!btn) return;
-    const id = btn.dataset.id;
-    if(btn.dataset.action === 'edit') openEditModal(id);
-    if(btn.dataset.action === 'delete') deleteMemory(id);
+    if(btn){
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      if(btn.dataset.action === 'edit') openEditModal(id);
+      if(btn.dataset.action === 'delete') deleteMemory(id);
+      return;
+    }
+    const card = e.target.closest('.memory-card');
+    if(card) openDetailModal(card.dataset.id);
   });
 
   function openEditModal(id){
@@ -784,28 +864,37 @@
     document.getElementById('memDate').value = m.memory_date;
     document.getElementById('memDesc').value = m.description || '';
     memImgFile.value = '';
+    destroyCropper();
 
     if(m.image_url){
-      memImgPreview.src = m.image_url;
-      memImgPreview.style.display = 'block';
+      currentImagePreview.src = m.image_url;
+      currentImagePreview.style.display = 'block';
     }else{
-      memImgPreview.style.display = 'none';
+      currentImagePreview.style.display = 'none';
     }
 
     modalOverlay.classList.add('open');
   }
 
-  const memImgFile = document.getElementById('memImgFile');
-  const memImgPreview = document.getElementById('memImgPreview');
-
   memImgFile.addEventListener('change', () => {
     const file = memImgFile.files[0];
-    if(!file){
-      memImgPreview.style.display = 'none';
-      return;
-    }
-    memImgPreview.src = URL.createObjectURL(file);
-    memImgPreview.style.display = 'block';
+    destroyCropper();
+    if(!file) return;
+
+    currentImagePreview.style.display = 'none';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      cropImage.src = e.target.result;
+      cropWrap.style.display = 'block';
+      cropper = new Cropper(cropImage, {
+        aspectRatio: 4 / 3,
+        viewMode: 1,
+        autoCropArea: 1,
+        background: false
+      });
+    };
+    reader.readAsDataURL(file);
   });
 
   function closeModal(){
@@ -814,8 +903,9 @@
     document.getElementById('memDate').value = '';
     document.getElementById('memDesc').value = '';
     memImgFile.value = '';
-    memImgPreview.style.display = 'none';
-    memImgPreview.src = '';
+    currentImagePreview.style.display = 'none';
+    currentImagePreview.src = '';
+    destroyCropper();
     editingId = null;
     existingImageUrl = null;
   }
@@ -834,17 +924,26 @@
     saveBtn.disabled = true;
     let image_url = existingImageUrl;
 
-    if(file){
+    if(file && cropper){
       saveBtn.textContent = 'Fotoğraf yükleniyor...';
-      const { url, error: uploadError } = await uploadImage(file);
-      if(uploadError){
-        alert('Fotoğraf yüklenirken bir hata oluştu, tekrar dener misin?');
-        console.error(uploadError);
+      try{
+        const blob = await getCroppedBlob();
+        const { url, error: uploadError } = await uploadImage(blob);
+        if(uploadError){
+          alert('Fotoğraf yüklenirken bir hata oluştu, tekrar dener misin?');
+          console.error(uploadError);
+          saveBtn.disabled = false;
+          saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
+          return;
+        }
+        image_url = url;
+      }catch(err){
+        alert('Fotoğraf işlenirken bir hata oluştu, tekrar dener misin?');
+        console.error(err);
         saveBtn.disabled = false;
         saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
         return;
       }
-      image_url = url;
     }
 
     saveBtn.textContent = editingId ? 'Güncelleniyor...' : 'Kaydediliyor...';
@@ -871,6 +970,41 @@
 
     closeModal();
     fetchMemories();
+  });
+
+  // ---------- Anı detay modalı ----------
+  const detailModalOverlay = document.getElementById('detailModalOverlay');
+  const detailCloseBtn = document.getElementById('detailCloseBtn');
+
+  function openDetailModal(id){
+    const m = currentMemories.find(x => String(x.id) === String(id));
+    if(!m) return;
+
+    const detailImage = document.getElementById('detailImage');
+    if(m.image_url){
+      detailImage.src = m.image_url;
+      detailImage.style.display = 'block';
+    }else{
+      detailImage.style.display = 'none';
+    }
+
+    document.getElementById('detailTitle').textContent = m.title;
+    document.getElementById('detailDate').textContent = `${formatDate(m.memory_date)} · ${timeAgo(m.memory_date)}`;
+
+    const detailDesc = document.getElementById('detailDesc');
+    detailDesc.textContent = m.description || '';
+    detailDesc.style.display = m.description ? 'block' : 'none';
+
+    detailModalOverlay.classList.add('open');
+  }
+
+  function closeDetailModal(){
+    detailModalOverlay.classList.remove('open');
+  }
+
+  detailCloseBtn.addEventListener('click', closeDetailModal);
+  detailModalOverlay.addEventListener('click', (e) => {
+    if(e.target === detailModalOverlay) closeDetailModal();
   });
 </script>
 
