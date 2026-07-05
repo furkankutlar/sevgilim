@@ -783,6 +783,33 @@
     });
   }
 
+  function getResizedOriginalBlob(file, maxWidth = 1920, quality = 0.85){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          if(width > maxWidth){
+            height = Math.round(height * (maxWidth / width));
+            width = maxWidth;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if(blob) resolve(blob); else reject(new Error('Görsel işlenemedi'));
+          }, 'image/jpeg', quality);
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function uploadImage(blob){
     if(!supabaseClient) return { error: "Supabase bağlı değil" };
     try{
@@ -815,6 +842,7 @@
 
   let editingId = null;
   let existingImageUrl = null;
+  let existingOriginalImageUrl = null;
   let cropper = null;
   let cropperReadyPromise = null;
 
@@ -830,6 +858,7 @@
   openModalBtn.addEventListener('click', () => {
     editingId = null;
     existingImageUrl = null;
+    existingOriginalImageUrl = null;
     document.getElementById('modalTitle').textContent = 'Yeni bir anı ekle 💗';
     saveBtn.textContent = 'Kaydet';
     currentImagePreview.style.display = 'none';
@@ -859,6 +888,7 @@
 
     editingId = id;
     existingImageUrl = m.image_url || null;
+    existingOriginalImageUrl = m.original_image_url || null;
 
     document.getElementById('modalTitle').textContent = 'Anıyı düzenle 💗';
     saveBtn.textContent = 'Güncelle';
@@ -922,6 +952,7 @@
     destroyCropper();
     editingId = null;
     existingImageUrl = null;
+    existingOriginalImageUrl = null;
   }
 
   saveBtn.addEventListener('click', async () => {
@@ -937,6 +968,7 @@
 
     saveBtn.disabled = true;
     let image_url = existingImageUrl;
+    let original_image_url = existingOriginalImageUrl;
 
     if(file){
       saveBtn.textContent = 'Fotoğraf hazırlanıyor...';
@@ -961,16 +993,26 @@
 
       saveBtn.textContent = 'Fotoğraf yükleniyor...';
       try{
-        const blob = await getCroppedBlob();
-        const { url, error: uploadError } = await uploadImage(blob);
-        if(uploadError){
+        const [croppedBlob, originalBlob] = await Promise.all([
+          getCroppedBlob(),
+          getResizedOriginalBlob(file)
+        ]);
+
+        const [croppedRes, originalRes] = await Promise.all([
+          uploadImage(croppedBlob),
+          uploadImage(originalBlob)
+        ]);
+
+        if(croppedRes.error || originalRes.error){
           alert('Fotoğraf yüklenirken bir hata oluştu, tekrar dener misin?');
-          console.error(uploadError);
+          console.error(croppedRes.error || originalRes.error);
           saveBtn.disabled = false;
           saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
           return;
         }
-        image_url = url;
+
+        image_url = croppedRes.url;
+        original_image_url = originalRes.url;
       }catch(err){
         alert('Fotoğraf işlenirken bir hata oluştu, tekrar dener misin?');
         console.error(err);
@@ -986,7 +1028,8 @@
       title,
       memory_date: date,
       description: description || null,
-      image_url
+      image_url,
+      original_image_url
     };
 
     const { error } = editingId
@@ -1015,8 +1058,9 @@
     if(!m) return;
 
     const detailImage = document.getElementById('detailImage');
-    if(m.image_url){
-      detailImage.src = m.image_url;
+    const fullImageUrl = m.original_image_url || m.image_url;
+    if(fullImageUrl){
+      detailImage.src = fullImageUrl;
       detailImage.style.display = 'block';
     }else{
       detailImage.style.display = 'none';
