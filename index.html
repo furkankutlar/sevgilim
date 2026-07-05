@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 
   /* ========================================================
@@ -210,11 +211,203 @@
     font-weight:500;
   }
 
+  /* ============================================================
+     ANILARIMIZ BÖLÜMÜ
+     ============================================================ */
+  .memories-section{
+    margin-top:20px;
+    text-align:left;
+  }
+
+  .memories-header{
+    text-align:center;
+    margin-bottom:36px;
+  }
+
+  .memories-header h2{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:clamp(26px, 4vw, 36px);
+  }
+  .memories-header h2 em{
+    font-style:italic;
+    color:#C97F9E;
+  }
+
+  .memories-header p{
+    margin-top:8px;
+    font-size:14px;
+    opacity:.6;
+  }
+
+  .memories-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
+    gap:18px;
+  }
+
+  .memory-card{
+    background:rgba(255,255,255,.6);
+    backdrop-filter:blur(14px);
+    border:1px solid rgba(255,255,255,.7);
+    border-radius:20px;
+    padding:20px;
+    box-shadow:0 12px 30px -14px rgba(75,59,79,.2);
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    transition:transform .25s ease;
+  }
+  .memory-card:hover{ transform:translateY(-4px); }
+
+  .memory-card img{
+    width:100%;
+    border-radius:14px;
+    object-fit:cover;
+    max-height:180px;
+  }
+
+  .memory-date{
+    font-size:12px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    font-weight:700;
+    color:#C97F9E;
+  }
+
+  .memory-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:18px;
+  }
+
+  .memory-desc{
+    font-size:14px;
+    line-height:1.5;
+    opacity:.8;
+  }
+
+  .memories-empty, .memories-loading, .memories-error{
+    text-align:center;
+    opacity:.55;
+    font-size:14px;
+    padding:20px;
+  }
+
+  /* ---------- Yeni anı ekleme butonu ---------- */
+  .fab{
+    position:fixed;
+    bottom:28px;
+    right:28px;
+    width:58px;
+    height:58px;
+    border-radius:50%;
+    background:linear-gradient(160deg, #C97F9E, var(--blush));
+    color:#fff;
+    border:none;
+    font-size:28px;
+    line-height:1;
+    cursor:pointer;
+    box-shadow:0 14px 30px -10px rgba(201,127,158,.6);
+    z-index:20;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:transform .2s ease;
+  }
+  .fab:hover{ transform:scale(1.08); }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(75,59,79,.35);
+    backdrop-filter:blur(4px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:30;
+    padding:20px;
+  }
+  .modal-overlay.open{ display:flex; }
+
+  .modal{
+    background:var(--cream);
+    border-radius:24px;
+    padding:28px;
+    width:100%;
+    max-width:420px;
+    box-shadow:0 30px 60px -20px rgba(75,59,79,.4);
+    text-align:left;
+  }
+
+  .modal h3{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:22px;
+    margin-bottom:18px;
+    text-align:center;
+  }
+
+  .field{ margin-bottom:14px; }
+  .field label{
+    display:block;
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    opacity:.6;
+    margin-bottom:6px;
+  }
+  .field input, .field textarea{
+    width:100%;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(75,59,79,.2);
+    background:#fff;
+    font-family:'Quicksand', sans-serif;
+    font-size:14px;
+    color:var(--plum);
+    resize:vertical;
+  }
+  .field textarea{ min-height:70px; }
+  .field input[type="file"]{
+    padding:8px;
+    background:#fff;
+    font-size:13px;
+  }
+
+  .modal-actions{
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+  }
+  .modal-actions button{
+    flex:1;
+    padding:11px;
+    border-radius:14px;
+    border:none;
+    font-family:'Quicksand', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+  }
+  .btn-save{ background:#C97F9E; color:#fff; }
+  .btn-cancel{ background:rgba(75,59,79,.08); color:var(--plum); }
+
+  .modal-note{
+    font-size:11px;
+    opacity:.5;
+    margin-top:10px;
+    text-align:center;
+  }
+
   /* ---------- Mobil uyum ---------- */
   @media (max-width:640px){
     .counter{ grid-template-columns:repeat(3, 1fr); }
     .unit{ padding:18px 6px 14px; }
     .wrap{ padding:48px 18px 60px; }
+    .memories-grid{ grid-template-columns:1fr; }
   }
   @media (max-width:380px){
     .counter{ grid-template-columns:repeat(2, 1fr); gap:12px; }
@@ -259,13 +452,57 @@
       değil; kalbimin her atışıyla ölçülüyor."
     </p>
 
+    <div class="divider"></div>
+
+    <!-- ==================== ANILARIMIZ ==================== -->
+    <section class="memories-section">
+      <div class="memories-header">
+        <h2>Anılar<em>ımız</em></h2>
+        <p>Birlikte biriktirdiğimiz küçük büyük her şey</p>
+      </div>
+      <div class="memories-grid" id="memoriesGrid">
+        <div class="memories-loading">Anılar yükleniyor...</div>
+      </div>
+    </section>
+
     <footer>Sonsuza kadar, seninle 💗</footer>
+  </div>
+
+  <!-- Yeni anı ekle butonu -->
+  <button class="fab" id="openModalBtn" aria-label="Yeni anı ekle">+</button>
+
+  <!-- Yeni anı ekleme modalı -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3>Yeni bir anı ekle 💗</h3>
+      <div class="field">
+        <label for="memTitle">Başlık</label>
+        <input type="text" id="memTitle" placeholder="Örn: İlk buluşmamız" maxlength="60">
+      </div>
+      <div class="field">
+        <label for="memDate">Tarih</label>
+        <input type="date" id="memDate">
+      </div>
+      <div class="field">
+        <label for="memDesc">Açıklama</label>
+        <textarea id="memDesc" placeholder="O gün neler oldu, neler hissettin..."></textarea>
+      </div>
+      <div class="field">
+        <label for="memImgFile">Fotoğraf (opsiyonel)</label>
+        <input type="file" id="memImgFile" accept="image/*">
+        <img id="memImgPreview" alt="" style="display:none; margin-top:10px; width:100%; max-height:160px; object-fit:cover; border-radius:12px;">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="cancelBtn">Vazgeç</button>
+        <button class="btn-save" id="saveBtn">Kaydet</button>
+      </div>
+      <div class="modal-note">Bu anı ikimizin de göreceği ortak listeye eklenecek</div>
+    </div>
   </div>
 
 <script>
   // ============================================================
   // DÜZENLENEBİLİR: Birlikte olmaya başladığınız tarih/saat
-  // Format: YYYY, AY-1 (0=Ocak), GÜN, SAAT, DAKİKA
   // ============================================================
   const startDate = new Date(2026, 5, 20, 0, 0, 0); // 20 Haziran 2026, 00:00
 
@@ -320,6 +557,209 @@
   }
   setInterval(spawnHeart, 1400);
   for(let i=0;i<5;i++) setTimeout(spawnHeart, i*400);
+
+  // ============================================================
+  // ANILARIMIZ — SUPABASE ENTEGRASYONU
+  // ============================================================
+  // 1) https://supabase.com adresinde ücretsiz bir proje oluştur
+  // 2) Project Settings > API bölümünden URL ve anon public key'i al
+  // 3) Aşağıdaki iki değişkeni kendi bilgilerinle değiştir
+  // ============================================================
+  const SUPABASE_URL = "sb_publishable_xspX8ngBwDwzG5Ob7XtBcA_3Fqb4qBX";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4c2Fnd291dmltamx6Ym92eWF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDk1MDUsImV4cCI6MjA5ODgyNTUwNX0.8GViEPzagEaKg8vAAfOh429JnqQ6OcJvmb1E7XFX93E";
+
+  const supabaseClient = (SUPABASE_URL.startsWith("http"))
+    ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
+  const memoriesGrid = document.getElementById('memoriesGrid');
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function formatDate(dateStr){
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
+  }
+
+  function renderMemories(memories){
+    if(!memories || memories.length === 0){
+      memoriesGrid.innerHTML = '<div class="memories-empty">Henüz anı eklenmedi. İlk anıyı sen ekle! 💗</div>';
+      return;
+    }
+    memoriesGrid.innerHTML = memories.map(m => `
+      <div class="memory-card">
+        ${m.image_url ? `<img src="${escapeHtml(m.image_url)}" alt="" onerror="this.remove()">` : ''}
+        <div class="memory-date">${formatDate(m.memory_date)}</div>
+        <div class="memory-title">${escapeHtml(m.title)}</div>
+        ${m.description ? `<div class="memory-desc">${escapeHtml(m.description)}</div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  async function fetchMemories(){
+    if(!supabaseClient){
+      memoriesGrid.innerHTML = '<div class="memories-error">Supabase bağlantısı henüz kurulmadı. Kod içindeki SUPABASE_URL ve SUPABASE_ANON_KEY alanlarını doldur.</div>';
+      return;
+    }
+    const { data, error } = await supabaseClient
+      .from('memories')
+      .select('*')
+      .order('memory_date', { ascending: false });
+
+    if(error){
+      console.error(error);
+      memoriesGrid.innerHTML = '<div class="memories-error">Anılar yüklenirken bir hata oluştu.</div>';
+      return;
+    }
+    renderMemories(data);
+  }
+
+  async function addMemory(memory){
+    if(!supabaseClient) return { error: "Supabase bağlı değil" };
+    const { error } = await supabaseClient.from('memories').insert([memory]);
+    return { error };
+  }
+
+  // ---------- Fotoğraf: yeniden boyutlandırma + Supabase Storage'a yükleme ----------
+  const STORAGE_BUCKET = "memory-photos"; // Supabase'de oluşturacağın bucket adıyla aynı olmalı
+
+  function resizeImage(file, maxWidth = 1600, quality = 0.82){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          if(width > maxWidth){
+            height = Math.round(height * (maxWidth / width));
+            width = maxWidth;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if(blob) resolve(blob); else reject(new Error('Görsel işlenemedi'));
+          }, 'image/jpeg', quality);
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function uploadImage(file){
+    if(!supabaseClient) return { error: "Supabase bağlı değil" };
+    try{
+      const blob = await resizeImage(file);
+      const fileName = `${crypto.randomUUID()}.jpg`;
+      const { error: uploadError } = await supabaseClient
+        .storage
+        .from(STORAGE_BUCKET)
+        .upload(fileName, blob, { contentType: 'image/jpeg' });
+
+      if(uploadError) return { error: uploadError };
+
+      const { data } = supabaseClient.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
+      return { url: data.publicUrl };
+    }catch(err){
+      return { error: err };
+    }
+  }
+
+  fetchMemories();
+
+  // ---------- Modal kontrolleri ----------
+  const modalOverlay = document.getElementById('modalOverlay');
+  const openModalBtn = document.getElementById('openModalBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const saveBtn = document.getElementById('saveBtn');
+
+  openModalBtn.addEventListener('click', () => {
+    modalOverlay.classList.add('open');
+  });
+  cancelBtn.addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => {
+    if(e.target === modalOverlay) closeModal();
+  });
+
+  const memImgFile = document.getElementById('memImgFile');
+  const memImgPreview = document.getElementById('memImgPreview');
+
+  memImgFile.addEventListener('change', () => {
+    const file = memImgFile.files[0];
+    if(!file){
+      memImgPreview.style.display = 'none';
+      return;
+    }
+    memImgPreview.src = URL.createObjectURL(file);
+    memImgPreview.style.display = 'block';
+  });
+
+  function closeModal(){
+    modalOverlay.classList.remove('open');
+    document.getElementById('memTitle').value = '';
+    document.getElementById('memDate').value = '';
+    document.getElementById('memDesc').value = '';
+    memImgFile.value = '';
+    memImgPreview.style.display = 'none';
+    memImgPreview.src = '';
+  }
+
+  saveBtn.addEventListener('click', async () => {
+    const title = document.getElementById('memTitle').value.trim();
+    const date = document.getElementById('memDate').value;
+    const description = document.getElementById('memDesc').value.trim();
+    const file = memImgFile.files[0];
+
+    if(!title || !date){
+      alert('Lütfen başlık ve tarih gir.');
+      return;
+    }
+
+    saveBtn.disabled = true;
+    let image_url = null;
+
+    if(file){
+      saveBtn.textContent = 'Fotoğraf yükleniyor...';
+      const { url, error: uploadError } = await uploadImage(file);
+      if(uploadError){
+        alert('Fotoğraf yüklenirken bir hata oluştu, tekrar dener misin?');
+        console.error(uploadError);
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Kaydet';
+        return;
+      }
+      image_url = url;
+    }
+
+    saveBtn.textContent = 'Kaydediliyor...';
+
+    const { error } = await addMemory({
+      title,
+      memory_date: date,
+      description: description || null,
+      image_url
+    });
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Kaydet';
+
+    if(error){
+      alert('Bir hata oluştu, tekrar dener misin?');
+      console.error(error);
+      return;
+    }
+
+    closeModal();
+    fetchMemories();
+  });
 </script>
 
 </body>
