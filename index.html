@@ -428,6 +428,7 @@
     max-width: 500px;
     margin: 0 auto 24px;
     width: 100%;
+    padding: 0 20px;
   }
   .bucket-input-wrapper input {
     flex: 1;
@@ -452,6 +453,7 @@
     transition: transform 0.2s;
     -webkit-tap-highlight-color: transparent;
   }
+  .btn-bucket-add:hover { background: #b0637e; }
   .btn-bucket-add:active { transform: scale(0.95); }
 
   .bucket-list-container {
@@ -527,193 +529,6 @@
     -webkit-tap-highlight-color: transparent;
   }
   .fab:hover{ transform:scale(1.08); }
-
-  /* ---------- Modallar ---------- */
-  .modal-overlay{
-    position:fixed;
-    inset:0;
-    background:rgba(75,59,79,.4);
-    backdrop-filter:blur(6px);
-    -webkit-backdrop-filter:blur(6px);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    z-index:30;
-    padding:16px;
-  }
-  .modal-overlay.open{ display:flex; }
-
-  .modal{
-    background:var(--cream);
-    border-radius:24px;
-    padding:24px;
-    width:100%;
-    max-width:420px;
-    max-height: 85vh; /* Ekrandan dikey taşmayı önler */
-    overflow-y: auto; /* Küçük ekranlarda dikey kaydırma sunar */
-    box-shadow:0 30px 60px -20px rgba(75,59,79,.4);
-    text-align:left;
-  }
-
-  .modal h3{
-    font-family:'Fraunces', serif;
-    font-weight:600;
-    font-size:22px;
-    margin-bottom:18px;
-    text-align:center;
-  }
-
-  .field{ margin-bottom:14px; }
-  .field label{
-    display:block;
-    font-size:12px;
-    font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:.05em;
-    opacity:.6;
-    margin-bottom:6px;
-  }
-  .field input, .field textarea{
-    width:100%;
-    padding:12px;
-    border-radius:12px;
-    border:1px solid rgba(75,59,79,.2);
-    background:#fff;
-    font-family:'Quicksand', sans-serif;
-    font-size:16px; /* iOS Safari otomatik odak yakınlaştırmasını çözer */
-    color:var(--plum);
-    resize:vertical;
-  }
-  .field textarea{ min-height:80px; }
-  .field input[type="file"]{
-    padding:10px;
-    background:#fff;
-    font-size:14px;
-  }
-
-  /* ---------- Kırpma Alanı Orantı Ayarı ---------- */
-  .crop-wrap{
-    margin-top:10px;
-    width:100%;
-    height: auto;
-    aspect-ratio: 4 / 3;
-    max-height: 220px;
-    border-radius:14px;
-    overflow:hidden;
-    background:#000;
-  }
-  .crop-wrap img{
-    display:block;
-    max-width:100%;
-  }
-
-  #currentImagePreview{
-    width:100%;
-    aspect-ratio:4/3;
-    object-fit:cover;
-    border-radius:12px;
-    margin-top:10px;
-  }
-
-  /* ---------- Detay Modalı ---------- */
-  .detail-modal{
-    max-width:480px;
-    padding:0;
-    overflow:hidden;
-    position:relative;
-  }
-  .detail-modal img{
-    width:100%;
-    max-height:45vh;
-    object-fit:contain;
-    background:#000;
-    display:block;
-  }
-  .detail-modal .detail-body{
-    padding:20px 24px 24px;
-  }
-  .detail-title{
-    font-size:20px;
-    margin-bottom:4px;
-  }
-  .detail-close{
-    position:absolute;
-    top:12px;
-    right:12px;
-    width:36px;
-    height:36px;
-    border-radius:50%;
-    border:none;
-    background:rgba(0,0,0,.5);
-    color:#fff;
-    font-size:16px;
-    cursor:pointer;
-    z-index:5;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-
-  .modal-actions{
-    display:flex;
-    gap:10px;
-    margin-top:20px;
-  }
-  .modal-actions button{
-    flex:1;
-    padding:12px;
-    border-radius:14px;
-    border:none;
-    font-family:'Quicksand', sans-serif;
-    font-weight:700;
-    font-size:15px;
-    cursor:pointer;
-  }
-  .btn-save{ background:#C97F9E; color:#fff; }
-  .btn-cancel{ background:rgba(75,59,79,.08); color:var(--plum); }
-
-  .modal-note{
-    font-size:11px;
-    opacity:.5;
-    margin-top:10px;
-    text-align:center;
-  }
-
-  /* ============================================================
-     SIRIUS MOBİL DETAY AYARI (iOS & SAFARI MAX)
-     ============================================================ */
-  @media (max-width:640px){
-    .counter{
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 36px;
-      width: 100%;
-    }
-    .unit{
-      flex: 1 1 calc(33.333% - 10px);
-      min-width: 85px;
-      padding: 14px 4px 12px;
-      border-radius: 16px;
-    }
-    .unit:nth-child(4), .unit:nth-child(5) {
-      flex: 1 1 calc(50% - 10px);
-    }
-    
-    .wrap{ padding:36px 16px 80px; }
-    .memories-grid{ grid-template-columns: 1fr; gap: 16px; }
-    .message { margin-top: 44px; }
-    
-    /* Mobilde Spotify kartını küçült */
-    .custom-spotify-card { max-width: 90%; }
-  }
-
-  @media (max-width:360px) {
-    .unit {
-      flex: 1 1 calc(50% - 10px);
-    }
-  }
 
   @media (prefers-reduced-motion: reduce){
     *{ animation:none !important; transition:none !important; }
@@ -796,51 +611,6 @@
     <footer>Sonsuza dek yanımda, kalırsın olur ya 💗</footer>
   </div>
 
-  <button class="fab" id="openModalBtn" aria-label="Yeni anı ekle">+</button>
-
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <h3 id="modalTitle">Yeni bir anı ekle 💗</h3>
-      <div class="field">
-        <label for="memTitle">Başlık</label>
-        <input type="text" id="memTitle" placeholder="Örn: İlk buluşmamız" maxlength="60">
-      </div>
-      <div class="field">
-        <label for="memDate">Tarih</label>
-        <input type="date" id="memDate">
-      </div>
-      <div class="field">
-        <label for="memDesc">Açıklama</label>
-        <textarea id="memDesc" placeholder="O gün neler oldu, neler hissettin..."></textarea>
-      </div>
-      <div class="field">
-        <label for="memImgFile">Fotoğraf (opsiyonel)</label>
-        <input type="file" id="memImgFile" accept="image/*">
-        <img id="currentImagePreview" alt="" style="display:none;">
-        <div class="crop-wrap" id="cropWrap" style="display:none;">
-          <img id="cropImage" alt="">
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn-cancel" id="cancelBtn">Vazgeç</button>
-        <button class="btn-save" id="saveBtn">Kaydet</button>
-      </div>
-      <div class="modal-note">Bu anı ikimizin de göreceği ortak listeye eklenecek</div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="detailModalOverlay">
-    <div class="modal detail-modal">
-      <button class="detail-close" id="detailCloseBtn" aria-label="Kapat">✕</button>
-      <img id="detailImage" alt="" style="display:none;">
-      <div class="detail-body">
-        <div class="memory-date" id="detailDate"></div>
-        <div class="memory-title detail-title" id="detailTitle"></div>
-        <div class="memory-desc" id="detailDesc"></div>
-      </div>
-    </div>
-  </div>
-
 <script>
   const startDate = new Date(2026, 5, 20, 0, 0, 0); // 20 Haziran 2026, 00:00
 
@@ -897,14 +667,12 @@
   for(let i=0;i<5;i++) setTimeout(spawnHeart, i*400);
 
   // ============================================================
-  // SUPABASE ENTEGRASYONU & AKSİYONLAR
+  // SUPABASE ENTEGRASYONU
   // ============================================================
   const SUPABASE_URL = "https://gxsagwouvimjlzbovyay.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4c2Fnd291dmltamx6Ym92eWF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDk1MDUsImV4cCI6MjA5ODgyNTUwNX0.8GViEPzagEaKg8vAAfOh429JnqQ6OcJvmb1E7XFX93E";
 
-  const supabaseClient = (SUPABASE_URL.startsWith("http"))
-    ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    : null;
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const memoriesGrid = document.getElementById('memoriesGrid');
   const bucketListContainer = document.getElementById('bucketListContainer');
@@ -935,131 +703,139 @@
   }
 
   // ---------- ANILAR LOGIC ----------
-  let currentMemories = [];
-
   async function fetchMemories(){
-    if(!supabaseClient){
-      memoriesGrid.innerHTML = '<div class="memories-error">Supabase bağlantısı henüz kurulmadı.</div>';
-      return;
-    }
-    const { data, error } = await supabaseClient
-      .from('memories')
-      .select('*')
-      .order('memory_date', { ascending: false });
+    try {
+      const { data, error } = await supabaseClient
+        .from('memories')
+        .select('*')
+        .order('memory_date', { ascending: false });
 
-    if(error){
-      console.error(error);
-      memoriesGrid.innerHTML = '<div class="memories-error">Anılar yüklenirken bir hata oluştu.</div>';
-      return;
-    }
-    currentMemories = data;
-    renderMemories(data);
-  }
+      if(error){
+        console.error('Anılar hatası:', error);
+        memoriesGrid.innerHTML = '<div class="memories-error">Anılar yüklenirken bir hata oluştu.</div>';
+        return;
+      }
+      
+      if(!data || data.length === 0){
+        memoriesGrid.innerHTML = '<div class="memories-empty">Henüz anı eklenmedi. İlk anıyı sen ekle! 💗</div>';
+        return;
+      }
 
-  function renderMemories(memories){
-    if(!memories || memories.length === 0){
-      memoriesGrid.innerHTML = '<div class="memories-empty">Henüz anı eklenmedi. İlk anıyı sen ekle! 💗</div>';
-      return;
-    }
-    memoriesGrid.innerHTML = memories.map(m => `
-      <div class="memory-card" data-id="${m.id}">
-        ${m.image_url ? `<img src="${escapeHtml(m.image_url)}" alt="" onerror="this.remove()">` : ''}
-        <div class="memory-date">${formatDate(m.memory_date)} <span class="memory-ago">· ${timeAgo(m.memory_date)}</span></div>
-        <div class="memory-title">${escapeHtml(m.title)}</div>
-        <div class="memory-actions">
-          <button class="icon-btn" data-action="edit" data-id="${m.id}" aria-label="Düzenle">✏️</button>
-          <button class="icon-btn" data-action="delete" data-id="${m.id}" aria-label="Sil">🗑️</button>
+      memoriesGrid.innerHTML = data.map(m => `
+        <div class="memory-card" data-id="${m.id}">
+          ${m.image_url ? `<img src="${escapeHtml(m.image_url)}" alt="" onerror="this.remove()">` : ''}
+          <div class="memory-date">${formatDate(m.memory_date)} <span class="memory-ago">· ${timeAgo(m.memory_date)}</span></div>
+          <div class="memory-title">${escapeHtml(m.title)}</div>
         </div>
-      </div>
-    `).join('');
+      `).join('');
+    } catch(e) {
+      console.error('Fetch hatası:', e);
+      memoriesGrid.innerHTML = '<div class="memories-error">Bağlantı hatası.</div>';
+    }
   }
 
   // ---------- BUCKET LIST LOGIC ----------
   async function fetchBucketList() {
-    if(!supabaseClient) return;
-    const { data, error } = await supabaseClient
-      .from('bucket_list')
-      .select('*')
-      .order('created_at', { ascending: true });
+    try {
+      const { data, error } = await supabaseClient
+        .from('bucket_list')
+        .select('*')
+        .order('created_at', { ascending: true });
 
-    if(error) { 
-      bucketListContainer.innerHTML = '<div class="bucket-empty">Yüklenirken hata oluştu.</div>'; 
-      return; 
-    }
-    
-    if(!data || data.length === 0) {
-      bucketListContainer.innerHTML = '<div class="bucket-empty">Henüz bir hayal eklenmedi, birlikte ilk hayalinizi yazın! ✨</div>';
-      return;
-    }
+      if(error) { 
+        console.error('Bucket hatası:', error);
+        bucketListContainer.innerHTML = '<div class="bucket-empty">Yüklenirken hata oluştu.</div>'; 
+        return; 
+      }
+      
+      if(!data || data.length === 0) {
+        bucketListContainer.innerHTML = '<div class="bucket-empty">Henüz bir hayal eklenmedi, birlikte ilk hayalinizi yazın! ✨</div>';
+        return;
+      }
 
-    bucketListContainer.innerHTML = data.map(item => `
-      <div class="bucket-item ${item.is_completed ? 'completed' : ''}" data-id="${item.id}">
-        <div class="bucket-left" onclick="toggleBucketItem(${item.id}, ${item.is_completed})">
-          <div class="bucket-checkbox"></div>
-          <div class="bucket-text">${escapeHtml(item.title)}</div>
+      bucketListContainer.innerHTML = data.map(item => `
+        <div class="bucket-item ${item.is_completed ? 'completed' : ''}" data-id="${item.id}">
+          <div class="bucket-left">
+            <div class="bucket-checkbox"></div>
+            <div class="bucket-text">${escapeHtml(item.title)}</div>
+          </div>
+          <button class="icon-btn" style="width:28px; height:28px; font-size:12px;">🗑️</button>
         </div>
-        <button class="icon-btn" onclick="deleteBucketItem(${item.id})">🗑️</button>
-      </div>
-    `).join('');
-  }
+      `).join('');
 
-  // ---------- BUCKET LIST FONKSIYONLARI ----------
-  async function toggleBucketItem(id, currentStatus) {
-    if (!supabaseClient) return;
-    
-    const { error } = await supabaseClient
-      .from('bucket_list')
-      .update({ is_completed: !currentStatus })
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Toggle hatası:', error);
-      return;
+      // Event listener'ları ekle
+      document.querySelectorAll('.bucket-item').forEach(item => {
+        const id = parseInt(item.dataset.id);
+        const isCompleted = item.classList.contains('completed');
+        
+        item.querySelector('.bucket-left').addEventListener('click', () => toggleBucket(id, isCompleted));
+        item.querySelector('.icon-btn').addEventListener('click', () => deleteBucket(id));
+      });
+    } catch(e) {
+      console.error('Bucket fetch hatası:', e);
+      bucketListContainer.innerHTML = '<div class="bucket-empty">Yüklenirken hata oluştu.</div>';
     }
-    fetchBucketList();
   }
 
-  async function deleteBucketItem(id) {
-    if (!supabaseClient) return;
-    
-    const { error } = await supabaseClient
-      .from('bucket_list')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Silme hatası:', error);
-      return;
+  // ---------- BUCKET FONKSIYONLARI ----------
+  async function toggleBucket(id, currentStatus) {
+    try {
+      const { error } = await supabaseClient
+        .from('bucket_list')
+        .update({ is_completed: !currentStatus })
+        .eq('id', id);
+      
+      if(error) console.error('Toggle hatası:', error);
+      else fetchBucketList();
+    } catch(e) {
+      console.error('Toggle try hatası:', e);
     }
-    fetchBucketList();
   }
 
-  // Ekle butonuna tıklandığında
-  document.getElementById('bucketAddBtn').addEventListener('click', async () => {
+  async function deleteBucket(id) {
+    try {
+      const { error } = await supabaseClient
+        .from('bucket_list')
+        .delete()
+        .eq('id', id);
+      
+      if(error) console.error('Delete hatası:', error);
+      else fetchBucketList();
+    } catch(e) {
+      console.error('Delete try hatası:', e);
+    }
+  }
+
+  async function addBucket() {
     const input = document.getElementById('bucketInput');
     const title = input.value.trim();
     
     if (!title) return;
-    if (!supabaseClient) return;
     
-    const { error } = await supabaseClient
-      .from('bucket_list')
-      .insert([{ title, is_completed: false }]);
-    
-    if (error) {
-      console.error('Ekleme hatası:', error);
-      return;
+    try {
+      const { error } = await supabaseClient
+        .from('bucket_list')
+        .insert([{ title, is_completed: false }]);
+      
+      if(error) {
+        console.error('Insert hatası:', error);
+        return;
+      }
+      
+      input.value = '';
+      fetchBucketList();
+    } catch(e) {
+      console.error('Insert try hatası:', e);
     }
-    
-    input.value = '';
-    fetchBucketList();
-  });
+  }
 
-  // Enter tuşuna basıldığında da ekle
-  document.getElementById('bucketInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      document.getElementById('bucketAddBtn').click();
-    }
+  // Event listener'ları ekle
+  const addBtn = document.getElementById('bucketAddBtn');
+  const input = document.getElementById('bucketInput');
+
+  if(addBtn) addBtn.addEventListener('click', addBucket);
+  if(input) input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addBucket();
   });
 
   // Sayfayı yükle
