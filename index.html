@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropper.js/1.6.1/cropper.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropper.js/1.6.1/cropper.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 
@@ -940,7 +940,17 @@
 
     if(file){
       saveBtn.textContent = 'Fotoğraf hazırlanıyor...';
-      if(cropperReadyPromise) await cropperReadyPromise;
+      if(cropperReadyPromise){
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000));
+        try{
+          await Promise.race([cropperReadyPromise, timeout]);
+        }catch(err){
+          alert('Fotoğraf hazırlanamadı. İnternet bağlantını kontrol edip tekrar dener misin?');
+          saveBtn.disabled = false;
+          saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
+          return;
+        }
+      }
 
       if(!cropper){
         alert('Fotoğraf işlenemedi, lütfen tekrar dener misin?');
