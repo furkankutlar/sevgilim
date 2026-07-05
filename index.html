@@ -816,12 +816,14 @@
   let editingId = null;
   let existingImageUrl = null;
   let cropper = null;
+  let cropperReadyPromise = null;
 
   function destroyCropper(){
     if(cropper){
       cropper.destroy();
       cropper = null;
     }
+    cropperReadyPromise = null;
     cropWrap.style.display = 'none';
   }
 
@@ -883,16 +885,28 @@
 
     currentImagePreview.style.display = 'none';
 
+    let resolveReady;
+    cropperReadyPromise = new Promise((resolve) => { resolveReady = resolve; });
+
     const reader = new FileReader();
     reader.onload = (e) => {
-      cropImage.src = e.target.result;
       cropWrap.style.display = 'block';
-      cropper = new Cropper(cropImage, {
-        aspectRatio: 4 / 3,
-        viewMode: 1,
-        autoCropArea: 1,
-        background: false
-      });
+      cropImage.onload = () => {
+        cropper = new Cropper(cropImage, {
+          aspectRatio: 4 / 3,
+          viewMode: 1,
+          autoCropArea: 1,
+          background: false,
+          ready(){
+            resolveReady();
+          }
+        });
+      };
+      cropImage.src = e.target.result;
+    };
+    reader.onerror = () => {
+      alert('Fotoğraf okunamadı, tekrar dener misin?');
+      resolveReady();
     };
     reader.readAsDataURL(file);
   });
@@ -924,7 +938,17 @@
     saveBtn.disabled = true;
     let image_url = existingImageUrl;
 
-    if(file && cropper){
+    if(file){
+      saveBtn.textContent = 'Fotoğraf hazırlanıyor...';
+      if(cropperReadyPromise) await cropperReadyPromise;
+
+      if(!cropper){
+        alert('Fotoğraf işlenemedi, lütfen tekrar dener misin?');
+        saveBtn.disabled = false;
+        saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
+        return;
+      }
+
       saveBtn.textContent = 'Fotoğraf yükleniyor...';
       try{
         const blob = await getCroppedBlob();
