@@ -249,7 +249,6 @@
     position: relative;
     flex-shrink: 0;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    animation: spinRecord 10s linear infinite;
   }
 
   .spotify-album-art img {
@@ -257,6 +256,7 @@
     height: 100%;
     object-fit: cover;
     border-radius: 50%;
+    animation: spinRecord 10s linear infinite;
   }
 
   .spotify-center-hole {
@@ -268,7 +268,8 @@
     height: 14px;
     background: var(--cream);
     border-radius: 50%;
-    border: 1px solid rgba(0,0,0,0.1);
+    border: 2px solid rgba(0,0,0,0.2);
+    z-index: 10;
   }
 
   .spotify-info {
@@ -899,7 +900,7 @@
   // SUPABASE ENTEGRASYONU & AKSİYONLAR
   // ============================================================
   const SUPABASE_URL = "https://gxsagwouvimjlzbovyay.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4c2Fnd291dmltamx6Ym92eWF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDk1MDUsImV4cCI6MjA5ODgyNTUwNX0.8GViEPzagEaKg8vAAfOh429JnqQ6OcJvmb1E7XFX93E";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4c2Fnd291dmltamx6Ym92eWF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDk1MDUsImV4cCI6MjA5ODgyNTUwNX0.8GViEFHsrzcAqw7bfqd5pF4cQzHdLBxJvN2-QZbMFW8";
 
   const supabaseClient = (SUPABASE_URL.startsWith("http"))
     ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -1002,379 +1003,68 @@
     `).join('');
   }
 
-  async function addBucketItem() {
-    const input = document.getElementById('bucketInput');
-    const title = input.value.trim();
-    if(!title) return;
-
-    const btn = document.getElementById('bucketAddBtn');
-    btn.disabled = true;
-
-    const { error } = await supabaseClient.from('bucket_list').insert([{ title }]);
-    btn.disabled = false;
-
-    if(error) { alert('Eklenirken bir hata oluştu.'); return; }
-    input.value = '';
-    fetchBucketList();
-  }
-
-  async function toggleBucketItem(id, currentState) {
-    const { error } = await supabaseClient.from('bucket_list').update({ is_completed: !currentState }).eq('id', id);
-    if(error) { alert('Güncellenirken hata oluştu.'); return; }
+  // ---------- BUCKET LIST FONKSIYONLARI ----------
+  async function toggleBucketItem(id, currentStatus) {
+    if (!supabaseClient) return;
+    
+    const { error } = await supabaseClient
+      .from('bucket_list')
+      .update({ is_completed: !currentStatus })
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Toggle hatası:', error);
+      return;
+    }
     fetchBucketList();
   }
 
   async function deleteBucketItem(id) {
-    if(event) event.stopPropagation();
-    if(!confirm('Bu hayali silmek istediğine emin misin?')) return;
-    const { error } = await supabaseClient.from('bucket_list').delete().eq('id', id);
-    if(error) { alert('Silinirken hata oluştu.'); return; }
+    if (!supabaseClient) return;
+    
+    const { error } = await supabaseClient
+      .from('bucket_list')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Silme hatası:', error);
+      return;
+    }
     fetchBucketList();
   }
 
-  // Tetikleyicileri bağla
-  document.getElementById('bucketAddBtn').addEventListener('click', addBucketItem);
-  document.getElementById('bucketInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') addBucketItem(); });
-
-  if(supabaseClient) {
-    fetchMemories();
+  // Ekle butonuna tıklandığında
+  document.getElementById('bucketAddBtn').addEventListener('click', async () => {
+    const input = document.getElementById('bucketInput');
+    const title = input.value.trim();
+    
+    if (!title) return;
+    if (!supabaseClient) return;
+    
+    const { error } = await supabaseClient
+      .from('bucket_list')
+      .insert([{ title, is_completed: false }]);
+    
+    if (error) {
+      console.error('Ekleme hatası:', error);
+      return;
+    }
+    
+    input.value = '';
     fetchBucketList();
-  }
-
-  // ---------- Anı Veritabanı İşlemleri ----------
-  async function addMemory(memory){
-    if(!supabaseClient) return { error: "Supabase bağlı değil" };
-    const { error } = await supabaseClient.from('memories').insert([memory]);
-    return { error };
-  }
-
-  async function updateMemory(id, memory){
-    if(!supabaseClient) return { error: "Supabase bağlı değil" };
-    const { error } = await supabaseClient.from('memories').update(memory).eq('id', id);
-    return { error };
-  }
-
-  async function deleteMemory(id){
-    if(!confirm('Bu anıyı silmek istediğine emin misin?')) return;
-    const { error } = await supabaseClient.from('memories').delete().eq('id', id);
-    if(error){
-      alert('Silinirken bir hata oluştu.');
-      console.error(error);
-      return;
-    }
-    fetchMemories();
-  }
-
-  // ---------- Fotoğraf İşlemleri ----------
-  const STORAGE_BUCKET = "memory-photos";
-
-  function getCroppedBlob(quality = 0.85, maxWidth = 1200){
-    return new Promise((resolve, reject) => {
-      if(!cropper){ resolve(null); return; }
-      const canvas = cropper.getCroppedCanvas({ maxWidth, imageSmoothingQuality: 'high' });
-      canvas.toBlob((blob) => {
-        if(blob) resolve(blob); else reject(new Error('Görsel işlenemedi'));
-      }, 'image/jpeg', quality);
-    });
-  }
-
-  function getResizedOriginalBlob(file, maxWidth = 1920, quality = 0.85){
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          let { width, height } = img;
-          if(width > maxWidth){
-            height = Math.round(height * (maxWidth / width));
-            width = maxWidth;
-          }
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-          canvas.toBlob((blob) => {
-            if(blob) resolve(blob); else reject(new Error('Görsel işlenemedi'));
-          }, 'image/jpeg', quality);
-        };
-        img.onerror = reject;
-        img.src = e.target.result;
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
-  async function uploadImage(blob){
-    if(!supabaseClient) return { error: "Supabase bağlı değil" };
-    try{
-      const fileName = `${crypto.randomUUID()}.jpg`;
-      const { error: uploadError } = await supabaseClient
-        .storage
-        .from(STORAGE_BUCKET)
-        .upload(fileName, blob, { contentType: 'image/jpeg' });
-
-      if(uploadError) return { error: uploadError };
-
-      const { data } = supabaseClient.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
-      return { url: data.publicUrl };
-    }catch(err){
-      return { error: err };
-    }
-  }
-
-  // ---------- Modal Kontrolleri ----------
-  const modalOverlay = document.getElementById('modalOverlay');
-  const openModalBtn = document.getElementById('openModalBtn');
-  const cancelBtn = document.getElementById('cancelBtn');
-  const saveBtn = document.getElementById('saveBtn');
-  const memImgFile = document.getElementById('memImgFile');
-  const currentImagePreview = document.getElementById('currentImagePreview');
-  const cropWrap = document.getElementById('cropWrap');
-  const cropImage = document.getElementById('cropImage');
-
-  let editingId = null;
-  let existingImageUrl = null;
-  let existingOriginalImageUrl = null;
-  let cropper = null;
-  let cropperReadyPromise = null;
-
-  function destroyCropper(){
-    if(cropper){
-      cropper.destroy();
-      cropper = null;
-    }
-    cropperReadyPromise = null;
-    cropWrap.style.display = 'none';
-  }
-
-  openModalBtn.addEventListener('click', () => {
-    editingId = null;
-    existingImageUrl = null;
-    existingOriginalImageUrl = null;
-    document.getElementById('modalTitle').textContent = 'Yeni bir anı ekle 💗';
-    saveBtn.textContent = 'Kaydet';
-    currentImagePreview.style.display = 'none';
-    modalOverlay.classList.add('open');
-  });
-  cancelBtn.addEventListener('click', closeModal);
-  modalOverlay.addEventListener('click', (e) => {
-    if(e.target === modalOverlay) closeModal();
   });
 
-  memoriesGrid.addEventListener('click', (e) => {
-    const btn = e.target.closest('.icon-btn');
-    if(btn){
-      e.stopPropagation();
-      const id = btn.dataset.id;
-      if(btn.dataset.action === 'edit') openEditModal(id);
-      if(btn.dataset.action === 'delete') deleteMemory(id);
-      return;
+  // Enter tuşuna basıldığında da ekle
+  document.getElementById('bucketInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      document.getElementById('bucketAddBtn').click();
     }
-    const card = e.target.closest('.memory-card');
-    if(card) openDetailModal(card.dataset.id);
   });
 
-  function openEditModal(id){
-    const m = currentMemories.find(x => String(x.id) === String(id));
-    if(!m) return;
-
-    editingId = id;
-    existingImageUrl = m.image_url || null;
-    existingOriginalImageUrl = m.original_image_url || null;
-
-    document.getElementById('modalTitle').textContent = 'Anıyı düzenle 💗';
-    saveBtn.textContent = 'Güncelle';
-    document.getElementById('memTitle').value = m.title;
-    document.getElementById('memDate').value = m.memory_date;
-    document.getElementById('memDesc').value = m.description || '';
-    memImgFile.value = '';
-    destroyCropper();
-
-    if(m.image_url){
-      currentImagePreview.src = m.image_url;
-      currentImagePreview.style.display = 'block';
-    }else{
-      currentImagePreview.style.display = 'none';
-    }
-
-    modalOverlay.classList.add('open');
-  }
-
-  memImgFile.addEventListener('change', () => {
-    const file = memImgFile.files[0];
-    destroyCropper();
-    if(!file) return;
-
-    currentImagePreview.style.display = 'none';
-
-    let resolveReady;
-    cropperReadyPromise = new Promise((resolve) => { resolveReady = resolve; });
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      cropWrap.style.display = 'block';
-      cropImage.onload = () => {
-        cropper = new Cropper(cropImage, {
-          aspectRatio: 4 / 3,
-          viewMode: 1,
-          autoCropArea: 1,
-          background: false,
-          ready(){
-            resolveReady();
-          }
-        });
-      };
-      cropImage.src = e.target.result;
-    };
-    reader.onerror = () => {
-      alert('Fotoğraf okunamadı, tekrar dener misin?');
-      resolveReady();
-    };
-    reader.readAsDataURL(file);
-  });
-
-  function closeModal(){
-    modalOverlay.classList.remove('open');
-    document.getElementById('memTitle').value = '';
-    document.getElementById('memDate').value = '';
-    document.getElementById('memDesc').value = '';
-    memImgFile.value = '';
-    currentImagePreview.style.display = 'none';
-    currentImagePreview.src = '';
-    destroyCropper();
-    editingId = null;
-    existingImageUrl = null;
-    existingOriginalImageUrl = null;
-  }
-
-  saveBtn.addEventListener('click', async () => {
-    const title = document.getElementById('memTitle').value.trim();
-    const date = document.getElementById('memDate').value;
-    const description = document.getElementById('memDesc').value.trim();
-    const file = memImgFile.files[0];
-
-    if(!title || !date){
-      alert('Lütfen başlık ve tarih gir.');
-      return;
-    }
-
-    saveBtn.disabled = true;
-    let image_url = existingImageUrl;
-    let original_image_url = existingOriginalImageUrl;
-
-    if(file){
-      saveBtn.textContent = 'Fotoğraf hazırlanıyor...';
-      if(cropperReadyPromise){
-        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000));
-        try{
-          await Promise.race([cropperReadyPromise, timeout]);
-        }catch(err){
-          alert('Fotoğraf hazırlanamadı. Bağlantını kontrol edip tekrar dener misin?');
-          saveBtn.disabled = false;
-          saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
-          return;
-        }
-      }
-
-      if(!cropper){
-        alert('Fotoğraf işlenemedi, lütfen tekrar dener misin?');
-        saveBtn.disabled = false;
-        saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
-        return;
-      }
-
-      saveBtn.textContent = 'Fotoğraf yükleniyor...';
-      try{
-        const [croppedBlob, originalBlob] = await Promise.all([
-          getCroppedBlob(),
-          getResizedOriginalBlob(file)
-        ]);
-
-        const [croppedRes, originalRes] = await Promise.all([
-          uploadImage(croppedBlob),
-          uploadImage(originalBlob)
-        ]);
-
-        if(croppedRes.error || originalRes.error){
-          alert('Fotoğraf yüklenirken bir hata oluştu, tekrar dener misin?');
-          saveBtn.disabled = false;
-          saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
-          return;
-        }
-
-        image_url = croppedRes.url;
-        original_image_url = originalRes.url;
-      }catch(err){
-        alert('Fotoğraf işlenirken bir hata oluştu, tekrar dener misin?');
-        saveBtn.disabled = false;
-        saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
-        return;
-      }
-    }
-
-    saveBtn.textContent = editingId ? 'Güncelleniyor...' : 'Kaydediliyor...';
-
-    const payload = {
-      title,
-      memory_date: date,
-      description: description || null,
-      image_url,
-      original_image_url
-    };
-
-    const { error } = editingId
-      ? await updateMemory(editingId, payload)
-      : await addMemory(payload);
-
-    saveBtn.disabled = false;
-    saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
-
-    if(error){
-      alert('Bir hata oluştu, tekrar dener misin?');
-      return;
-    }
-
-    closeModal();
-    fetchMemories();
-  });
-
-  // ---------- Anı Detay Modalı ----------
-  const detailModalOverlay = document.getElementById('detailModalOverlay');
-  const detailCloseBtn = document.getElementById('detailCloseBtn');
-
-  function openDetailModal(id){
-    const m = currentMemories.find(x => String(x.id) === String(id));
-    if(!m) return;
-
-    const detailImage = document.getElementById('detailImage');
-    const fullImageUrl = m.original_image_url || m.image_url;
-    if(fullImageUrl){
-      detailImage.src = fullImageUrl;
-      detailImage.style.display = 'block';
-    }else{
-      detailImage.style.display = 'none';
-    }
-
-    document.getElementById('detailTitle').textContent = m.title;
-    document.getElementById('detailDate').textContent = `${formatDate(m.memory_date)} · ${timeAgo(m.memory_date)}`;
-
-    const detailDesc = document.getElementById('detailDesc');
-    detailDesc.textContent = m.description || '';
-    detailDesc.style.display = m.description ? 'block' : 'none';
-
-    detailModalOverlay.classList.add('open');
-  }
-
-  function closeDetailModal(){
-    detailModalOverlay.classList.remove('open');
-  }
-
-  detailCloseBtn.addEventListener('click', closeDetailModal);
-  detailModalOverlay.addEventListener('click', (e) => {
-    if(e.target === detailModalOverlay) closeDetailModal();
-  });
+  // Sayfayı yükle
+  fetchMemories();
+  fetchBucketList();
 </script>
-
 </body>
 </html>
