@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Biz &mdash; Birlikte Geçen Zaman</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,18 +11,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-
-  /* ========================================================
-     DÜZENLENEBİLİR AYARLAR — Sadece burayı değiştirmen yeterli
-     ======================================================== */
   :root{
     /* Pastel palet */
-    --cream:     #FDF6F0;
-    --blush:     #F7C9DA;
-    --lavender:  #D9CCF2;
-    --mint:      #C7F0DE;
-    --plum:      #4B3B4F;
-    --gold:      #F0BE7E;
+    --cream:      #FDF6F0;
+    --blush:      #F7C9DA;
+    --lavender:   #D9CCF2;
+    --mint:       #C7F0DE;
+    --plum:       #4B3B4F;
+    --gold:       #F0BE7E;
   }
 
   *{ box-sizing:border-box; margin:0; padding:0; }
@@ -87,7 +83,7 @@
     z-index:2;
     max-width:880px;
     margin:0 auto;
-    padding:64px 24px 80px;
+    padding:64px 24px 100px;
     text-align:center;
   }
 
@@ -104,8 +100,8 @@
   h1{
     font-family:'Fraunces', serif;
     font-weight:500;
-    font-size:clamp(34px, 6vw, 60px);
-    line-height:1.1;
+    font-size:clamp(30px, 6vw, 60px);
+    line-height:1.2;
     letter-spacing:-0.01em;
   }
   h1 em{
@@ -121,7 +117,7 @@
     font-weight:500;
   }
 
-  /* ---------- Sayaç: kalp biçiminde kümelenmiş kartlar ---------- */
+  /* ---------- Sayaç Masaüstü Düzeni ---------- */
   .counter{
     margin-top:56px;
     display:grid;
@@ -154,7 +150,7 @@
   .unit .num{
     font-family:'Fraunces', serif;
     font-weight:600;
-    font-size:clamp(28px, 5vw, 42px);
+    font-size:clamp(24px, 5vw, 42px);
     color:var(--plum);
     font-variant-numeric:tabular-nums;
   }
@@ -170,7 +166,7 @@
 
   .unit.gold{ background:linear-gradient(160deg, rgba(240,190,126,.35), rgba(255,255,255,.5)); }
 
-  /* ---------- Saniye satırı (küçük, nabız gibi) ---------- */
+  /* ---------- Saniye satırı ---------- */
   .seconds-row{
     margin-top:18px;
     font-size:14px;
@@ -260,6 +256,7 @@
     gap:10px;
     transition:transform .25s ease;
     cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
   }
   .memory-card:hover{ transform:translateY(-4px); }
 
@@ -293,8 +290,8 @@
   }
 
   .icon-btn{
-    width:32px;
-    height:32px;
+    width:36px; /* Dokunma kolaylığı için büyütüldü */
+    height:36px;
     border:none;
     border-radius:10px;
     background:rgba(75,59,79,.08);
@@ -326,18 +323,18 @@
     padding:20px;
   }
 
-  /* ---------- Yeni anı ekleme butonu ---------- */
+  /* ---------- Sabit Ekle Butonu ---------- */
   .fab{
     position:fixed;
-    bottom:28px;
-    right:28px;
-    width:58px;
-    height:58px;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    right: calc(24px + env(safe-area-inset-right));
+    width: 60px;
+    height: 60px;
     border-radius:50%;
     background:linear-gradient(160deg, #C97F9E, var(--blush));
     color:#fff;
     border:none;
-    font-size:28px;
+    font-size:32px;
     line-height:1;
     cursor:pointer;
     box-shadow:0 14px 30px -10px rgba(201,127,158,.6);
@@ -346,29 +343,32 @@
     align-items:center;
     justify-content:center;
     transition:transform .2s ease;
+    -webkit-tap-highlight-color: transparent;
   }
   .fab:hover{ transform:scale(1.08); }
 
-  /* ---------- Modal ---------- */
+  /* ---------- Modallar ---------- */
   .modal-overlay{
     position:fixed;
     inset:0;
-    background:rgba(75,59,79,.35);
-    backdrop-filter:blur(4px);
+    background:rgba(75,59,79,.4);
+    backdrop-filter:blur(6px);
     display:none;
     align-items:center;
     justify-content:center;
     z-index:30;
-    padding:20px;
+    padding:16px;
   }
   .modal-overlay.open{ display:flex; }
 
   .modal{
     background:var(--cream);
     border-radius:24px;
-    padding:28px;
+    padding:24px;
     width:100%;
     max-width:420px;
+    max-height: 90vh; /* Ekrandan dikey taşmayı önler */
+    overflow-y: auto; /* Küçük ekranlarda kaydırılabilir yapar */
     box-shadow:0 30px 60px -20px rgba(75,59,79,.4);
     text-align:left;
   }
@@ -393,27 +393,29 @@
   }
   .field input, .field textarea{
     width:100%;
-    padding:10px 12px;
+    padding:12px;
     border-radius:12px;
     border:1px solid rgba(75,59,79,.2);
     background:#fff;
     font-family:'Quicksand', sans-serif;
-    font-size:14px;
+    font-size:16px; /* iOS'un otomatik yakınlaştırma yapmasını önlemek için 16px yapıldı */
     color:var(--plum);
     resize:vertical;
   }
-  .field textarea{ min-height:70px; }
+  .field textarea{ min-height:80px; }
   .field input[type="file"]{
-    padding:8px;
+    padding:10px;
     background:#fff;
-    font-size:13px;
+    font-size:14px;
   }
 
-  /* ---------- Fotoğraf kırpma alanı ---------- */
+  /* ---------- Kırpma Alanı Mobil Ayarı ---------- */
   .crop-wrap{
     margin-top:10px;
     width:100%;
-    height:260px;
+    height: auto;
+    aspect-ratio: 4 / 3; /* Sabit px yerine oran vererek taşma önlendi */
+    max-height: 220px;
     border-radius:14px;
     overflow:hidden;
     background:#000;
@@ -431,7 +433,7 @@
     margin-top:10px;
   }
 
-  /* ---------- Anı detay modalı ---------- */
+  /* ---------- Detay Modalı Mobil Ayarı ---------- */
   .detail-modal{
     max-width:480px;
     padding:0;
@@ -440,13 +442,13 @@
   }
   .detail-modal img{
     width:100%;
-    max-height:60vh;
+    max-height:50vh; /* Dikey ekranlarda butonların aşağı kaymasını önler */
     object-fit:contain;
     background:#000;
     display:block;
   }
   .detail-modal .detail-body{
-    padding:22px 26px 26px;
+    padding:20px 24px 24px;
   }
   .detail-title{
     font-size:20px;
@@ -454,13 +456,13 @@
   }
   .detail-close{
     position:absolute;
-    top:14px;
-    right:14px;
-    width:34px;
-    height:34px;
+    top:12px;
+    right:12px;
+    width:36px;
+    height:36px;
     border-radius:50%;
     border:none;
-    background:rgba(0,0,0,.45);
+    background:rgba(0,0,0,.5);
     color:#fff;
     font-size:16px;
     cursor:pointer;
@@ -477,12 +479,12 @@
   }
   .modal-actions button{
     flex:1;
-    padding:11px;
+    padding:12px;
     border-radius:14px;
     border:none;
     font-family:'Quicksand', sans-serif;
     font-weight:700;
-    font-size:14px;
+    font-size:15px;
     cursor:pointer;
   }
   .btn-save{ background:#C97F9E; color:#fff; }
@@ -495,15 +497,37 @@
     text-align:center;
   }
 
-  /* ---------- Mobil uyum ---------- */
+  /* ============================================================
+     MOBİL UYUMLULUK SİHİRBAZI (MEDIA QUERIES)
+     ============================================================ */
   @media (max-width:640px){
-    .counter{ grid-template-columns:repeat(3, 1fr); }
-    .unit{ padding:18px 6px 14px; }
-    .wrap{ padding:48px 18px 60px; }
-    .memories-grid{ grid-template-columns:1fr; }
+    /* 5 adet kartın mobilde dengeli durması için esnek satır düzeni */
+    .counter{
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 36px;
+    }
+    .unit{
+      flex: 1 1 calc(33.333% - 10px); /* İlk 3 kartı yan yana dizer */
+      min-width: 85px;
+      padding: 14px 4px 12px;
+      border-radius: 16px;
+    }
+    .unit:nth-child(4), .unit:nth-child(5)) {
+      flex: 1 1 calc(50% - 10px); /* Sonraki 2 kartı (Saat, Dakika) alt satırda ortalar */
+    }
+    
+    .wrap{ padding:36px 16px 80px; }
+    .memories-grid{ grid-template-columns: 1fr; gap: 16px; }
+    .message { margin-top: 44px; }
   }
-  @media (max-width:380px){
-    .counter{ grid-template-columns:repeat(2, 1fr); gap:12px; }
+
+  @media (max-width:380px) {
+    .unit {
+      flex: 1 1 calc(50% - 10px); /* Çok küçük cihazlarda 2'li düzen */
+    }
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -547,7 +571,6 @@
 
     <div class="divider"></div>
 
-    <!-- ==================== ANILARIMIZ ==================== -->
     <section class="memories-section">
       <div class="memories-header">
         <h2>Anılar<em>ımız</em></h2>
@@ -558,13 +581,11 @@
       </div>
     </section>
 
-    <footer>Sonsuza kadar, seninle 💗</footer>
+    <footer>Sonsuza dek yanımda, kalırsın olur ya 💗</footer>
   </div>
 
-  <!-- Yeni anı ekle butonu -->
   <button class="fab" id="openModalBtn" aria-label="Yeni anı ekle">+</button>
 
-  <!-- Yeni anı ekleme modalı -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
       <h3 id="modalTitle">Yeni bir anı ekle 💗</h3>
@@ -596,7 +617,6 @@
     </div>
   </div>
 
-  <!-- Anı detay modalı -->
   <div class="modal-overlay" id="detailModalOverlay">
     <div class="modal detail-modal">
       <button class="detail-close" id="detailCloseBtn" aria-label="Kapat">✕</button>
@@ -610,9 +630,6 @@
   </div>
 
 <script>
-  // ============================================================
-  // DÜZENLENEBİLİR: Birlikte olmaya başladığınız tarih/saat
-  // ============================================================
   const startDate = new Date(2026, 5, 20, 0, 0, 0); // 20 Haziran 2026, 00:00
 
   function calcDiff(start, now){
@@ -670,10 +687,6 @@
   // ============================================================
   // ANILARIMIZ — SUPABASE ENTEGRASYONU
   // ============================================================
-  // 1) https://supabase.com adresinde ücretsiz bir proje oluştur
-  // 2) Project Settings > API bölümünden URL ve anon public key'i al
-  // 3) Aşağıdaki iki değişkeni kendi bilgilerinle değiştir
-  // ============================================================
   const SUPABASE_URL = "https://gxsagwouvimjlzbovyay.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4c2Fnd291dmltamx6Ym92eWF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDk1MDUsImV4cCI6MjA5ODgyNTUwNX0.8GViEPzagEaKg8vAAfOh429JnqQ6OcJvmb1E7XFX93E";
 
@@ -730,7 +743,7 @@
 
   async function fetchMemories(){
     if(!supabaseClient){
-      memoriesGrid.innerHTML = '<div class="memories-error">Supabase bağlantısı henüz kurulmadı. Kod içindeki SUPABASE_URL ve SUPABASE_ANON_KEY alanlarını doldur.</div>';
+      memoriesGrid.innerHTML = '<div class="memories-error">Supabase bağlantısı henüz kurulmadı.</div>';
       return;
     }
     const { data, error } = await supabaseClient
@@ -770,8 +783,8 @@
     fetchMemories();
   }
 
-  // ---------- Fotoğraf: kırpma + Supabase Storage'a yükleme ----------
-  const STORAGE_BUCKET = "memory-photos"; // Supabase'de oluşturacağın bucket adıyla aynı olmalı
+  // ---------- Fotoğraf İşlemleri ----------
+  const STORAGE_BUCKET = "memory-photos";
 
   function getCroppedBlob(quality = 0.85, maxWidth = 1200){
     return new Promise((resolve, reject) => {
@@ -830,7 +843,7 @@
 
   fetchMemories();
 
-  // ---------- Modal kontrolleri ----------
+  // ---------- Modal Kontrolleri ----------
   const modalOverlay = document.getElementById('modalOverlay');
   const openModalBtn = document.getElementById('openModalBtn');
   const cancelBtn = document.getElementById('cancelBtn');
@@ -977,7 +990,7 @@
         try{
           await Promise.race([cropperReadyPromise, timeout]);
         }catch(err){
-          alert('Fotoğraf hazırlanamadı. İnternet bağlantını kontrol edip tekrar dener misin?');
+          alert('Fotoğraf hazırlanamadı. Bağlantını kontrol edip tekrar dener misin?');
           saveBtn.disabled = false;
           saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
           return;
@@ -1005,7 +1018,6 @@
 
         if(croppedRes.error || originalRes.error){
           alert('Fotoğraf yüklenirken bir hata oluştu, tekrar dener misin?');
-          console.error(croppedRes.error || originalRes.error);
           saveBtn.disabled = false;
           saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
           return;
@@ -1015,7 +1027,6 @@
         original_image_url = originalRes.url;
       }catch(err){
         alert('Fotoğraf işlenirken bir hata oluştu, tekrar dener misin?');
-        console.error(err);
         saveBtn.disabled = false;
         saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
         return;
@@ -1041,7 +1052,6 @@
 
     if(error){
       alert('Bir hata oluştu, tekrar dener misin?');
-      console.error(error);
       return;
     }
 
@@ -1049,7 +1059,7 @@
     fetchMemories();
   });
 
-  // ---------- Anı detay modalı ----------
+  // ---------- Anı Detay Modalı ----------
   const detailModalOverlay = document.getElementById('detailModalOverlay');
   const detailCloseBtn = document.getElementById('detailCloseBtn');
 
