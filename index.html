@@ -275,6 +275,35 @@
     color:#C97F9E;
   }
 
+  .memory-ago{
+    font-weight:600;
+    text-transform:none;
+    letter-spacing:0;
+    opacity:.7;
+  }
+
+  .memory-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    margin-top:2px;
+  }
+
+  .icon-btn{
+    width:32px;
+    height:32px;
+    border:none;
+    border-radius:10px;
+    background:rgba(75,59,79,.08);
+    font-size:14px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background .2s ease;
+  }
+  .icon-btn:hover{ background:rgba(75,59,79,.16); }
+
   .memory-title{
     font-family:'Fraunces', serif;
     font-weight:600;
@@ -474,7 +503,7 @@
   <!-- Yeni anı ekleme modalı -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
-      <h3>Yeni bir anı ekle 💗</h3>
+      <h3 id="modalTitle">Yeni bir anı ekle 💗</h3>
       <div class="field">
         <label for="memTitle">Başlık</label>
         <input type="text" id="memTitle" placeholder="Örn: İlk buluşmamız" maxlength="60">
@@ -591,14 +620,34 @@
       return;
     }
     memoriesGrid.innerHTML = memories.map(m => `
-      <div class="memory-card">
+      <div class="memory-card" data-id="${m.id}">
         ${m.image_url ? `<img src="${escapeHtml(m.image_url)}" alt="" onerror="this.remove()">` : ''}
-        <div class="memory-date">${formatDate(m.memory_date)}</div>
+        <div class="memory-date">${formatDate(m.memory_date)} <span class="memory-ago">· ${timeAgo(m.memory_date)}</span></div>
         <div class="memory-title">${escapeHtml(m.title)}</div>
         ${m.description ? `<div class="memory-desc">${escapeHtml(m.description)}</div>` : ''}
+        <div class="memory-actions">
+          <button class="icon-btn" data-action="edit" data-id="${m.id}" aria-label="Düzenle">✏️</button>
+          <button class="icon-btn" data-action="delete" data-id="${m.id}" aria-label="Sil">🗑️</button>
+        </div>
       </div>
     `).join('');
   }
+
+  function timeAgo(dateStr){
+    const date = new Date(dateStr + "T00:00:00");
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    if(diffDays < 0) return "yakında";
+    if(diffDays === 0) return "bugün";
+    if(diffDays === 1) return "dün";
+    if(diffDays < 30) return `${diffDays} gün önce`;
+    const diffMonths = Math.floor(diffDays / 30);
+    if(diffMonths < 12) return `${diffMonths} ay önce`;
+    const diffYears = Math.floor(diffMonths / 12);
+    return `${diffYears} yıl önce`;
+  }
+
+  let currentMemories = [];
 
   async function fetchMemories(){
     if(!supabaseClient){
@@ -615,6 +664,7 @@
       memoriesGrid.innerHTML = '<div class="memories-error">Anılar yüklenirken bir hata oluştu.</div>';
       return;
     }
+    currentMemories = data;
     renderMemories(data);
   }
 
@@ -622,6 +672,23 @@
     if(!supabaseClient) return { error: "Supabase bağlı değil" };
     const { error } = await supabaseClient.from('memories').insert([memory]);
     return { error };
+  }
+
+  async function updateMemory(id, memory){
+    if(!supabaseClient) return { error: "Supabase bağlı değil" };
+    const { error } = await supabaseClient.from('memories').update(memory).eq('id', id);
+    return { error };
+  }
+
+  async function deleteMemory(id){
+    if(!confirm('Bu anıyı silmek istediğine emin misin?')) return;
+    const { error } = await supabaseClient.from('memories').delete().eq('id', id);
+    if(error){
+      alert('Silinirken bir hata oluştu.');
+      console.error(error);
+      return;
+    }
+    fetchMemories();
   }
 
   // ---------- Fotoğraf: yeniden boyutlandırma + Supabase Storage'a yükleme ----------
@@ -681,13 +748,52 @@
   const cancelBtn = document.getElementById('cancelBtn');
   const saveBtn = document.getElementById('saveBtn');
 
+  let editingId = null;
+  let existingImageUrl = null;
+
   openModalBtn.addEventListener('click', () => {
+    editingId = null;
+    existingImageUrl = null;
+    document.getElementById('modalTitle').textContent = 'Yeni bir anı ekle 💗';
+    saveBtn.textContent = 'Kaydet';
     modalOverlay.classList.add('open');
   });
   cancelBtn.addEventListener('click', closeModal);
   modalOverlay.addEventListener('click', (e) => {
     if(e.target === modalOverlay) closeModal();
   });
+
+  memoriesGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.icon-btn');
+    if(!btn) return;
+    const id = btn.dataset.id;
+    if(btn.dataset.action === 'edit') openEditModal(id);
+    if(btn.dataset.action === 'delete') deleteMemory(id);
+  });
+
+  function openEditModal(id){
+    const m = currentMemories.find(x => String(x.id) === String(id));
+    if(!m) return;
+
+    editingId = id;
+    existingImageUrl = m.image_url || null;
+
+    document.getElementById('modalTitle').textContent = 'Anıyı düzenle 💗';
+    saveBtn.textContent = 'Güncelle';
+    document.getElementById('memTitle').value = m.title;
+    document.getElementById('memDate').value = m.memory_date;
+    document.getElementById('memDesc').value = m.description || '';
+    memImgFile.value = '';
+
+    if(m.image_url){
+      memImgPreview.src = m.image_url;
+      memImgPreview.style.display = 'block';
+    }else{
+      memImgPreview.style.display = 'none';
+    }
+
+    modalOverlay.classList.add('open');
+  }
 
   const memImgFile = document.getElementById('memImgFile');
   const memImgPreview = document.getElementById('memImgPreview');
@@ -710,6 +816,8 @@
     memImgFile.value = '';
     memImgPreview.style.display = 'none';
     memImgPreview.src = '';
+    editingId = null;
+    existingImageUrl = null;
   }
 
   saveBtn.addEventListener('click', async () => {
@@ -724,7 +832,7 @@
     }
 
     saveBtn.disabled = true;
-    let image_url = null;
+    let image_url = existingImageUrl;
 
     if(file){
       saveBtn.textContent = 'Fotoğraf yükleniyor...';
@@ -733,23 +841,27 @@
         alert('Fotoğraf yüklenirken bir hata oluştu, tekrar dener misin?');
         console.error(uploadError);
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Kaydet';
+        saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
         return;
       }
       image_url = url;
     }
 
-    saveBtn.textContent = 'Kaydediliyor...';
+    saveBtn.textContent = editingId ? 'Güncelleniyor...' : 'Kaydediliyor...';
 
-    const { error } = await addMemory({
+    const payload = {
       title,
       memory_date: date,
       description: description || null,
       image_url
-    });
+    };
+
+    const { error } = editingId
+      ? await updateMemory(editingId, payload)
+      : await addMemory(payload);
 
     saveBtn.disabled = false;
-    saveBtn.textContent = 'Kaydet';
+    saveBtn.textContent = editingId ? 'Güncelle' : 'Kaydet';
 
     if(error){
       alert('Bir hata oluştu, tekrar dener misin?');
