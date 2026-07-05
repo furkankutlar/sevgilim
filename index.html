@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Biz &mdash; Birlikte Geçen Zaman</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +23,13 @@
 
   *{ box-sizing:border-box; margin:0; padding:0; }
 
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%; /* iOS yatay çevirmede font büyümesini önler */
+  }
+
   html{ scroll-behavior:smooth; }
 
   body{
@@ -30,14 +37,16 @@
     background:var(--cream);
     color:var(--plum);
     min-height:100vh;
-    overflow-x:hidden;
     position:relative;
   }
 
-  /* ---------- Arka plan: yumuşak akan pastel lekeler ---------- */
+  /* ---------- Arka plan: iOS Safari Taşma Korumalı Lekeler ---------- */
   .bg-blobs{
     position:fixed;
-    inset:0;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     z-index:0;
     overflow:hidden;
     pointer-events:none;
@@ -59,8 +68,17 @@
     50%{ transform:translate(30px,-40px) scale(1.08); }
   }
 
-  /* ---------- Uçuşan kalpler ---------- */
-  .hearts{ position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+  /* ---------- Uçuşan kalpler korumalı alan ---------- */
+  .hearts{ 
+    position:fixed; 
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index:1; 
+    pointer-events:none; 
+    overflow:hidden; 
+  }
   .heart{
     position:absolute;
     bottom:-40px;
@@ -77,13 +95,14 @@
     100%{ transform:translateY(-110vh) translateX(20px) rotate(25deg); opacity:0; }
   }
 
-  /* ---------- İçerik ---------- */
+  /* ---------- İçerik Kapsayıcı ---------- */
   .wrap{
     position:relative;
     z-index:2;
+    width: 100%;
     max-width:880px;
     margin:0 auto;
-    padding:64px 24px 100px;
+    padding:64px 20px 100px;
     text-align:center;
   }
 
@@ -100,7 +119,7 @@
   h1{
     font-family:'Fraunces', serif;
     font-weight:500;
-    font-size:clamp(30px, 6vw, 60px);
+    font-size:clamp(28px, 6vw, 60px);
     line-height:1.2;
     letter-spacing:-0.01em;
   }
@@ -126,11 +145,13 @@
     max-width:760px;
     margin-left:auto;
     margin-right:auto;
+    width: 100%;
   }
 
   .unit{
     background:rgba(255,255,255,.55);
     backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px); /* iOS Safari Desteği */
     border:1px solid rgba(255,255,255,.7);
     border-radius:22px;
     padding:22px 8px 18px;
@@ -150,13 +171,13 @@
   .unit .num{
     font-family:'Fraunces', serif;
     font-weight:600;
-    font-size:clamp(24px, 5vw, 42px);
+    font-size:clamp(22px, 5vw, 42px);
     color:var(--plum);
     font-variant-numeric:tabular-nums;
   }
   .unit .label{
     margin-top:4px;
-    font-size:12px;
+    font-size:11px;
     letter-spacing:.08em;
     text-transform:uppercase;
     color:var(--plum);
@@ -242,11 +263,13 @@
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
     gap:18px;
+    width: 100%;
   }
 
   .memory-card{
     background:rgba(255,255,255,.6);
     backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
     border:1px solid rgba(255,255,255,.7);
     border-radius:20px;
     padding:20px;
@@ -290,7 +313,7 @@
   }
 
   .icon-btn{
-    width:36px; /* Dokunma kolaylığı için büyütüldü */
+    width:36px;
     height:36px;
     border:none;
     border-radius:10px;
@@ -353,6 +376,7 @@
     inset:0;
     background:rgba(75,59,79,.4);
     backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
     display:none;
     align-items:center;
     justify-content:center;
@@ -367,8 +391,8 @@
     padding:24px;
     width:100%;
     max-width:420px;
-    max-height: 90vh; /* Ekrandan dikey taşmayı önler */
-    overflow-y: auto; /* Küçük ekranlarda kaydırılabilir yapar */
+    max-height: 85vh; /* Ekrandan dikey taşmayı önler */
+    overflow-y: auto; /* Küçük ekranlarda dikey kaydırma sunar */
     box-shadow:0 30px 60px -20px rgba(75,59,79,.4);
     text-align:left;
   }
@@ -398,7 +422,7 @@
     border:1px solid rgba(75,59,79,.2);
     background:#fff;
     font-family:'Quicksand', sans-serif;
-    font-size:16px; /* iOS'un otomatik yakınlaştırma yapmasını önlemek için 16px yapıldı */
+    font-size:16px; /* iOS Safari otomatik odak yakınlaştırmasını çözer */
     color:var(--plum);
     resize:vertical;
   }
@@ -409,12 +433,12 @@
     font-size:14px;
   }
 
-  /* ---------- Kırpma Alanı Mobil Ayarı ---------- */
+  /* ---------- Kırpma Alanı Orantı Ayarı ---------- */
   .crop-wrap{
     margin-top:10px;
     width:100%;
     height: auto;
-    aspect-ratio: 4 / 3; /* Sabit px yerine oran vererek taşma önlendi */
+    aspect-ratio: 4 / 3;
     max-height: 220px;
     border-radius:14px;
     overflow:hidden;
@@ -433,7 +457,7 @@
     margin-top:10px;
   }
 
-  /* ---------- Detay Modalı Mobil Ayarı ---------- */
+  /* ---------- Detay Modalı ---------- */
   .detail-modal{
     max-width:480px;
     padding:0;
@@ -442,7 +466,7 @@
   }
   .detail-modal img{
     width:100%;
-    max-height:50vh; /* Dikey ekranlarda butonların aşağı kaymasını önler */
+    max-height:45vh;
     object-fit:contain;
     background:#000;
     display:block;
@@ -498,25 +522,25 @@
   }
 
   /* ============================================================
-     MOBİL UYUMLULUK SİHİRBAZI (MEDIA QUERIES)
+     SIRIUS MOBİL DETAY AYARI (iOS & SAFARI MAX)
      ============================================================ */
   @media (max-width:640px){
-    /* 5 adet kartın mobilde dengeli durması için esnek satır düzeni */
     .counter{
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 10px;
       margin-top: 36px;
+      width: 100%;
     }
     .unit{
-      flex: 1 1 calc(33.333% - 10px); /* İlk 3 kartı yan yana dizer */
+      flex: 1 1 calc(33.333% - 10px);
       min-width: 85px;
       padding: 14px 4px 12px;
       border-radius: 16px;
     }
-    .unit:nth-child(4), .unit:nth-child(5)) {
-      flex: 1 1 calc(50% - 10px); /* Sonraki 2 kartı (Saat, Dakika) alt satırda ortalar */
+    .unit:nth-child(4), .unit:nth-child(5) {
+      flex: 1 1 calc(50% - 10px);
     }
     
     .wrap{ padding:36px 16px 80px; }
@@ -524,9 +548,9 @@
     .message { margin-top: 44px; }
   }
 
-  @media (max-width:380px) {
+  @media (max-width:360px) {
     .unit {
-      flex: 1 1 calc(50% - 10px); /* Çok küçük cihazlarda 2'li düzen */
+      flex: 1 1 calc(50% - 10px);
     }
   }
 
@@ -581,7 +605,7 @@
       </div>
     </section>
 
-    <footer>Sonsuza dek yanımda, kalırsın olur ya 💗</footer>
+    <footer>Sonsuza kadar, seninle 💗</footer>
   </div>
 
   <button class="fab" id="openModalBtn" aria-label="Yeni anı ekle">+</button>
