@@ -572,7 +572,110 @@ bucketInput.addEventListener('keypress', (e) => {
 });
 
 // ============================================================
+// ÖZEL GÜN SAYACI (her yıl kendini yenileyen geri sayımlar)
+// ============================================================
+const specialDaysGrid = document.getElementById('specialDaysGrid');
+const specialTitleInput = document.getElementById('specialTitleInput');
+const specialDateInput = document.getElementById('specialDateInput');
+const specialAddBtn = document.getElementById('specialAddBtn');
+
+function getNextOccurrence(dateStr){
+  const original = new Date(dateStr + "T00:00:00");
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let next = new Date(now.getFullYear(), original.getMonth(), original.getDate());
+  if(next < todayStart){
+    next = new Date(now.getFullYear() + 1, original.getMonth(), original.getDate());
+  }
+  return next;
+}
+
+function daysUntil(dateStr){
+  const next = getNextOccurrence(dateStr);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  return Math.round((next - todayStart) / (1000 * 60 * 60 * 24));
+}
+
+function formatShortDate(d){
+  return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+}
+
+async function fetchSpecialDays(){
+  const { data, error } = await supabaseClient.from('special_days').select('*');
+
+  if(error){
+    console.error('Özel günler hatası:', error);
+    specialDaysGrid.innerHTML = '<div class="memories-error">Yüklenirken bir hata oluştu.</div>';
+    return;
+  }
+
+  if(!data || data.length === 0){
+    specialDaysGrid.innerHTML = '<div class="memories-empty">Henüz özel gün eklenmedi. İlkini sen ekle! 💗</div>';
+    return;
+  }
+
+  const withDays = data
+    .map(item => ({ ...item, _daysLeft: daysUntil(item.event_date), _next: getNextOccurrence(item.event_date) }))
+    .sort((a, b) => a._daysLeft - b._daysLeft);
+
+  specialDaysGrid.innerHTML = withDays.map(item => `
+    <div class="special-card" data-id="${item.id}">
+      <button class="special-delete" data-action="delete-special" data-id="${item.id}" aria-label="Sil">🗑️</button>
+      ${item._daysLeft === 0
+        ? `<div class="special-days-num">🎉</div><div class="special-days-label">Bugün!</div>`
+        : `<div class="special-days-num">${item._daysLeft}</div><div class="special-days-label">gün kaldı</div>`}
+      <div class="special-title">${escapeHtml(item.title)}</div>
+      <div class="special-date">${formatShortDate(item._next)}</div>
+    </div>
+  `).join('');
+}
+
+specialDaysGrid.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action="delete-special"]');
+  if(!btn) return;
+  deleteSpecialDay(btn.dataset.id);
+});
+
+async function deleteSpecialDay(id){
+  if(!confirm('Bu özel günü silmek istediğine emin misin?')) return;
+  const { error } = await supabaseClient.from('special_days').delete().eq('id', id);
+  if(error){
+    console.error(error);
+    alert('Silinirken bir hata oluştu.');
+    return;
+  }
+  fetchSpecialDays();
+}
+
+async function addSpecialDay(){
+  const title = specialTitleInput.value.trim();
+  const date = specialDateInput.value;
+
+  if(!title || !date){
+    alert('Lütfen başlık ve tarih gir.');
+    return;
+  }
+
+  const { error } = await supabaseClient.from('special_days').insert([{ title, event_date: date }]);
+  if(error){
+    console.error(error);
+    alert('Eklenirken bir hata oluştu.');
+    return;
+  }
+
+  specialTitleInput.value = '';
+  specialDateInput.value = '';
+  fetchSpecialDays();
+}
+
+specialAddBtn.addEventListener('click', addSpecialDay);
+specialTitleInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') addSpecialDay(); });
+specialDateInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') addSpecialDay(); });
+
+// ============================================================
 // SAYFA YÜKLENİNCE
 // ============================================================
 fetchMemories();
 fetchBucketList();
+fetchSpecialDays();
