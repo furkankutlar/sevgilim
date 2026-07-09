@@ -798,3 +798,26 @@ function switchTab(tabName){
 tabButtons.forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.tab));
 });
+
+// ============================================================
+// TEMA (AÇIK / KARANLIK MOD)
+// ============================================================
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+function applyTheme(theme){
+  if(theme === 'dark'){
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeToggleBtn.textContent = '☀️ Aydınlık Moda Geç';
+  }else{
+    document.documentElement.removeAttribute('data-theme');
+    themeToggleBtn.textContent = '🌙 Karanlık Moda Geç';
+  }
+  try{ localStorage.setItem('biz-theme', theme); }catch(e){}
+}
+
+applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+
+themeToggleBtn.addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  applyTheme(isDark ? 'light' : 'dark');
+});
