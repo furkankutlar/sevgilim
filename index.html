@@ -2,6 +2,15 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
+<script>
+  // Sayfa boyanmadan önce kayıtlı temayı uygula (karanlık moda geçişte "yanıp sönme" olmasın diye)
+  (function(){
+    try{
+      var t = localStorage.getItem('biz-theme');
+      if(t === 'dark'){ document.documentElement.setAttribute('data-theme', 'dark'); }
+    }catch(e){}
+  })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Biz</title>
 <link rel="apple-touch-icon" href="https://gxsagwouvimjlzbovyay.supabase.co/storage/v1/object/public/memory-photos/resim1.jpg">
@@ -119,6 +128,16 @@
     <!-- ================= AYARLAR ================= -->
     <div class="tab-page" data-page="settings">
       <section class="notify-section">
+        <h2 class="section-title">Görünüm</h2>
+        <p class="section-subtitle">Siteyi kendine göre ayarla</p>
+        <div class="notify-buttons">
+          <button class="btn-bucket-add" id="themeToggleBtn">🌙 Karanlık Moda Geç</button>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="notify-section">
         <h2 class="section-title">Bildirimler</h2>
         <p class="section-subtitle">Bu cihazda bildirimleri aç, birbirinize anlık mesaj gönderin</p>
         <div class="notify-buttons">
@@ -136,7 +155,7 @@
   <nav class="tab-bar">
     <button class="tab-btn active" data-tab="home" aria-label="Ana Sayfa">🏠<span>Ana Sayfa</span></button>
     <button class="tab-btn" data-tab="memories" aria-label="Anılar">📸<span>Anılar</span></button>
-    <button class="tab-btn" data-tab="bucket" aria-label="Hayaller">✨<span>Hayaller</span></button>
+    <button class="tab-btn" data-tab="bucket" aria-label="Dateler">✨<span>Dateler</span></button>
     <button class="tab-btn" data-tab="special" aria-label="Özel Günler">🎉<span>Günler</span></button>
     <button class="tab-btn" data-tab="settings" aria-label="Ayarlar">⚙️<span>Ayarlar</span></button>
   </nav>
