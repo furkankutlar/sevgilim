@@ -5,6 +5,13 @@
   --mint:       #C7F0DE;
   --plum:       #4B3B4F;
   --gold:       #F0BE7E;
+  color-scheme: light;
+}
+
+[data-theme="dark"]{
+  --cream:      #211925;
+  --plum:       #F2E9EF;
+  color-scheme: dark;
 }
 
 *{ box-sizing:border-box; margin:0; padding:0; }
@@ -710,10 +717,10 @@ footer{
 /* ---------- Sabit ekle butonu ---------- */
 .fab{
   position:fixed;
-  bottom: calc(24px + env(safe-area-inset-bottom));
-  right: calc(24px + env(safe-area-inset-right));
-  width: 60px;
-  height: 60px;
+  bottom: calc(86px + env(safe-area-inset-bottom));
+  right: calc(20px + env(safe-area-inset-right));
+  width: 58px;
+  height: 58px;
   border-radius:50%;
   background:linear-gradient(160deg, #C97F9E, var(--blush));
   color:#fff;
@@ -722,7 +729,7 @@ footer{
   line-height:1;
   cursor:pointer;
   box-shadow:0 14px 30px -10px rgba(201,127,158,.6);
-  z-index:20;
+  z-index:26;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -811,4 +818,74 @@ footer{
 
 @media (prefers-reduced-motion: reduce){
   *{ animation:none !important; transition:none !important; }
+}
+
+/* ============================================================
+   KARANLIK MOD — cam kartların, inputların ve gölgelerin
+   karanlık arka plana uygun hale getirilmesi
+   ============================================================ */
+[data-theme="dark"] body{
+  background: var(--cream);
+}
+
+[data-theme="dark"] .unit,
+[data-theme="dark"] .custom-spotify-card,
+[data-theme="dark"] .memory-card,
+[data-theme="dark"] .bucket-list-container,
+[data-theme="dark"] .special-card{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.12);
+}
+
+[data-theme="dark"] .unit.gold{
+  background: linear-gradient(160deg, rgba(240,190,126,.16), rgba(255,255,255,.04));
+}
+
+[data-theme="dark"] .field input,
+[data-theme="dark"] .field textarea,
+[data-theme="dark"] .bucket-input-wrapper input,
+[data-theme="dark"] .special-input-wrapper input{
+  background: #2E2436;
+  border-color: rgba(255,255,255,.14);
+  color: var(--plum);
+}
+
+[data-theme="dark"] .icon-btn,
+[data-theme="dark"] .btn-cancel,
+[data-theme="dark"] .special-delete{
+  background: rgba(255,255,255,.08);
+}
+[data-theme="dark"] .icon-btn:hover,
+[data-theme="dark"] .special-delete:hover{
+  background: rgba(255,255,255,.16);
+}
+
+[data-theme="dark"] .bucket-checkbox{
+  background: #2E2436;
+}
+
+[data-theme="dark"] .tab-bar{
+  background: rgba(33,25,37,.85);
+  border-top-color: rgba(255,255,255,.08);
+}
+
+[data-theme="dark"] .modal-overlay{
+  background: rgba(0,0,0,.6);
+}
+
+[data-theme="dark"] .crop-wrap,
+[data-theme="dark"] .detail-modal img{
+  background: #000;
+}
+
+[data-theme="dark"] .memory-card:hover,
+[data-theme="dark"] .custom-spotify-card:hover{
+  box-shadow: 0 12px 30px -14px rgba(0,0,0,.6);
+}
+
+[data-theme="dark"] .memories-empty,
+[data-theme="dark"] .memories-loading,
+[data-theme="dark"] .memories-error,
+[data-theme="dark"] .bucket-empty{
+  opacity:.6;
 }
