@@ -693,6 +693,20 @@ footer{
   font-weight:500;
 }
 
+/* ---------- Bildirim butonları ---------- */
+.notify-section { margin-top: 20px; }
+.notify-buttons{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  max-width:320px;
+  margin:0 auto;
+  padding:0 20px;
+}
+.notify-buttons button{
+  width:100%;
+}
+
 /* ---------- Sabit ekle butonu ---------- */
 .fab{
   position:fixed;

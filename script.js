@@ -427,6 +427,10 @@ saveBtn.addEventListener('click', async () => {
     return;
   }
 
+  if(!editingId){
+    sendNotification('Yeni bir anı eklendi 💗', title);
+  }
+
   closeModal();
   fetchMemories();
 });
@@ -560,6 +564,7 @@ async function addBucket() {
   }
 
   input.value = '';
+  sendNotification('Yeni bir hayal eklendi ✨', title);
   fetchBucketList();
 }
 
@@ -672,6 +677,89 @@ async function addSpecialDay(){
 specialAddBtn.addEventListener('click', addSpecialDay);
 specialTitleInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') addSpecialDay(); });
 specialDateInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') addSpecialDay(); });
+
+// ============================================================
+// PUSH BİLDİRİMLERİ
+// ============================================================
+const VAPID_PUBLIC_KEY = "BAzUSKJcL3DXVdvkE2E5UOJFGq2ZgHUPh5clcAWchBAomuiqe8pZqOPKLi345KQTLcttXE-jtLAqIS6yy6nVsQ4";
+
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for(let i = 0; i < rawData.length; i++){
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+async function enableNotifications(){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)){
+    alert('Bu tarayıcı bildirimleri desteklemiyor. iPhone kullanıyorsan siteyi Safari üzerinden "Ana Ekrana Ekle" yaptığından ve ana ekrandaki simgeden açtığından emin ol.');
+    return;
+  }
+
+  try{
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted'){
+      alert('Bildirim izni verilmedi.');
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.register('sw.js');
+    await navigator.serviceWorker.ready;
+
+    let subscription = await registration.pushManager.getSubscription();
+    if(!subscription){
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+
+    const subJson = subscription.toJSON();
+    const { error } = await supabaseClient
+      .from('push_subscriptions')
+      .upsert({
+        endpoint: subJson.endpoint,
+        p256dh: subJson.keys.p256dh,
+        auth: subJson.keys.auth
+      }, { onConflict: 'endpoint' });
+
+    if(error){
+      console.error(error);
+      alert('Kaydedilirken bir hata oluştu.');
+      return;
+    }
+
+    alert('Bildirimler bu cihazda açıldı! 💗');
+  }catch(err){
+    console.error(err);
+    alert('Bildirimler açılırken bir hata oluştu. Sayfayı ana ekrana eklediğinden emin ol.');
+  }
+}
+
+async function sendNotification(title, body){
+  try{
+    await fetch('/api/send-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, body })
+    });
+  }catch(err){
+    console.error('Bildirim gönderme hatası:', err);
+  }
+}
+
+const enableNotifBtn = document.getElementById('enableNotifBtn');
+const sendNotifBtn = document.getElementById('sendNotifBtn');
+
+enableNotifBtn.addEventListener('click', enableNotifications);
+sendNotifBtn.addEventListener('click', () => {
+  const msg = prompt('Sevgiline ne mesajı göndermek istersin?');
+  if(msg && msg.trim()) sendNotification('Biz 💗', msg.trim());
+});
 
 // ============================================================
 // SAYFA YÜKLENİNCE
