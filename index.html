@@ -29,101 +29,120 @@
   <div class="hearts" id="hearts"></div>
 
   <div class="wrap">
-    <div class="eyebrow">Aşkımızın Zamanı</div>
 
-    <h1>Seninle geçen <em>her an</em><br>bir hediye</h1>
+    <!-- ================= ANA SAYFA ================= -->
+    <div class="tab-page active" data-page="home">
+      <div class="eyebrow">Aşkımızın Zamanı</div>
 
-    <div class="since">20 Haziran 2026'dan beri birlikteyiz</div>
+      <h1>Seninle geçen <em>her an</em><br>bir hediye</h1>
 
-    <div class="counter" id="counter">
-      <div class="unit"><div class="num" id="years">0</div><div class="label">Yıl</div></div>
-      <div class="unit"><div class="num" id="months">0</div><div class="label">Ay</div></div>
-      <div class="unit"><div class="num" id="days">0</div><div class="label">Gün</div></div>
-      <div class="unit"><div class="num" id="hours">0</div><div class="label">Saat</div></div>
-      <div class="unit gold"><div class="num" id="minutes">0</div><div class="label">Dakika</div></div>
+      <div class="since">20 Haziran 2026'dan beri birlikteyiz</div>
+
+      <div class="counter" id="counter">
+        <div class="unit"><div class="num" id="years">0</div><div class="label">Yıl</div></div>
+        <div class="unit"><div class="num" id="months">0</div><div class="label">Ay</div></div>
+        <div class="unit"><div class="num" id="days">0</div><div class="label">Gün</div></div>
+        <div class="unit"><div class="num" id="hours">0</div><div class="label">Saat</div></div>
+        <div class="unit gold"><div class="num" id="minutes">0</div><div class="label">Dakika</div></div>
+      </div>
+
+      <div class="seconds-row">ve <span class="sec-num" id="seconds">0</span> saniye ✨</div>
+
+      <div class="divider"></div>
+
+      <p class="message">
+        "Zaman geçtikçe anladım ki, sana olan aşkım saatlerle, günlerle
+        değil; kalbimin her atışıyla ölçülüyor."
+      </p>
+
+      <a href="https://open.spotify.com/intl-tr/track/0RVlgxQzm987QRszX2p875?si=f59362ef93da4055" target="_blank" class="custom-spotify-card">
+        <div class="spotify-album-art">
+          <img src="https://i.scdn.co/image/ab67616d0000b273c05cc8f9ff54fbfb6f802805" alt="Şarkı Kapağı">
+          <div class="spotify-center-hole"></div>
+        </div>
+        <div class="spotify-info">
+          <div class="spotify-title">Yalın - Olur Ya</div>
+          <div class="spotify-artist">Spotify'da Aç</div>
+          <div class="spotify-action">Tıkla ve Dinle 🎵</div>
+        </div>
+      </a>
     </div>
 
-    <div class="seconds-row">ve <span class="sec-num" id="seconds">0</span> saniye ✨</div>
+    <!-- ================= ANILAR ================= -->
+    <div class="tab-page" data-page="memories">
+      <section class="memories-section">
+        <div class="memories-header">
+          <h2 class="section-title">Anılar<em>ımız</em></h2>
+          <p class="section-subtitle">Birlikte biriktirdiğimiz küçük büyük her şey</p>
+        </div>
+        <div class="memories-grid" id="memoriesGrid">
+          <div class="memories-loading">Anılar yükleniyor...</div>
+        </div>
+      </section>
+    </div>
 
-    <div class="divider"></div>
+    <!-- ================= HAYALLER ================= -->
+    <div class="tab-page" data-page="bucket">
+      <section class="bucket-section">
+        <h2 class="section-title">Yapılacaklar<em> Listemiz</em></h2>
+        <p class="section-subtitle">Birlikte gerçekleştireceğimiz tüm hayallerimiz</p>
 
-    <section class="special-days-section">
-      <h2 class="section-title">Özel <em>Günlerimiz</em></h2>
-      <p class="section-subtitle">Sabırsızlıkla beklediğimiz günler</p>
+        <div class="bucket-input-wrapper">
+          <input type="text" id="bucketInput" placeholder="Yeni bir hayal ekle..." maxlength="100">
+          <button class="btn-bucket-add" id="bucketAddBtn">Ekle</button>
+        </div>
 
-      <div class="special-input-wrapper">
-        <input type="text" id="specialTitleInput" placeholder="Özel günün adı (örn: Doğum günün)" maxlength="60">
-        <input type="date" id="specialDateInput">
-        <button class="btn-bucket-add" id="specialAddBtn">Ekle</button>
-      </div>
+        <div class="bucket-list-container" id="bucketListContainer">
+          <div class="bucket-empty">Hayaller yükleniyor...</div>
+        </div>
+      </section>
+    </div>
 
-      <div class="special-days-grid" id="specialDaysGrid">
-        <div class="memories-loading">Yükleniyor...</div>
-      </div>
-    </section>
+    <!-- ================= ÖZEL GÜNLER ================= -->
+    <div class="tab-page" data-page="special">
+      <section class="special-days-section">
+        <h2 class="section-title">Özel <em>Günlerimiz</em></h2>
+        <p class="section-subtitle">Sabırsızlıkla beklediğimiz günler</p>
 
-    <div class="divider"></div>
+        <div class="special-input-wrapper">
+          <input type="text" id="specialTitleInput" placeholder="Özel günün adı (örn: Doğum günün)" maxlength="60">
+          <input type="date" id="specialDateInput">
+          <button class="btn-bucket-add" id="specialAddBtn">Ekle</button>
+        </div>
 
-    <p class="message">
-      "Zaman geçtikçe anladım ki, sana olan aşkım saatlerle, günlerle
-      değil; kalbimin her atışıyla ölçülüyor."
-    </p>
+        <div class="special-days-grid" id="specialDaysGrid">
+          <div class="memories-loading">Yükleniyor...</div>
+        </div>
+      </section>
+    </div>
 
-    <a href="https://open.spotify.com/intl-tr/track/0RVlgxQzm987QRszX2p875?si=f59362ef93da4055" target="_blank" class="custom-spotify-card">
-      <div class="spotify-album-art">
-        <img src="https://i.scdn.co/image/ab67616d0000b273c05cc8f9ff54fbfb6f802805" alt="Şarkı Kapağı">
-        <div class="spotify-center-hole"></div>
-      </div>
-      <div class="spotify-info">
-        <div class="spotify-title">Yalın - Olur Ya</div>
-        <div class="spotify-artist">Spotify'da Aç</div>
-        <div class="spotify-action">Tıkla ve Dinle 🎵</div>
-      </div>
-    </a>
-    <div class="divider"></div>
+    <!-- ================= AYARLAR ================= -->
+    <div class="tab-page" data-page="settings">
+      <section class="notify-section">
+        <h2 class="section-title">Bildirimler</h2>
+        <p class="section-subtitle">Bu cihazda bildirimleri aç, birbirinize anlık mesaj gönderin</p>
+        <div class="notify-buttons">
+          <button class="btn-bucket-add" id="enableNotifBtn">🔔 Bu Cihazda Bildirimleri Aç</button>
+          <button class="btn-bucket-add" id="sendNotifBtn">💌 Sevgiline Bildirim Gönder</button>
+        </div>
+      </section>
 
-    <section class="memories-section">
-      <div class="memories-header">
-        <h2 class="section-title">Anılar<em>ımız</em></h2>
-        <p class="section-subtitle">Birlikte biriktirdiğimiz küçük büyük her şey</p>
-      </div>
-      <div class="memories-grid" id="memoriesGrid">
-        <div class="memories-loading">Anılar yükleniyor...</div>
-      </div>
-    </section>
+      <footer>Sonsuza dek yanımda, kalırsın olur ya 💗</footer>
+    </div>
 
-    <div class="divider"></div>
-
-    <section class="bucket-section">
-      <h2 class="section-title">Yapılacaklar<em> Listemiz</em></h2>
-      <p class="section-subtitle">Birlikte gerçekleştireceğimiz tüm hayallerimiz</p>
-
-      <div class="bucket-input-wrapper">
-        <input type="text" id="bucketInput" placeholder="Yeni bir hayal ekle..." maxlength="100">
-        <button class="btn-bucket-add" id="bucketAddBtn">Ekle</button>
-      </div>
-
-      <div class="bucket-list-container" id="bucketListContainer">
-        <div class="bucket-empty">Hayaller yükleniyor...</div>
-      </div>
-    </section>
-
-    <div class="divider"></div>
-
-    <section class="notify-section">
-      <h2 class="section-title">Bildirimler</h2>
-      <p class="section-subtitle">Bu cihazda bildirimleri aç, birbirinize anlık mesaj gönderin</p>
-      <div class="notify-buttons">
-        <button class="btn-bucket-add" id="enableNotifBtn">🔔 Bu Cihazda Bildirimleri Aç</button>
-        <button class="btn-bucket-add" id="sendNotifBtn">💌 Sevgiline Bildirim Gönder</button>
-      </div>
-    </section>
-
-    <footer>Sonsuza dek yanımda, kalırsın olur ya 💗</footer>
   </div>
 
-  <!-- Yeni anı ekle butonu -->
-  <button class="fab" id="openModalBtn" aria-label="Yeni anı ekle">+</button>
+  <!-- Alt sekme çubuğu -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="home" aria-label="Ana Sayfa">🏠<span>Ana Sayfa</span></button>
+    <button class="tab-btn" data-tab="memories" aria-label="Anılar">📸<span>Anılar</span></button>
+    <button class="tab-btn" data-tab="bucket" aria-label="Hayaller">✨<span>Hayaller</span></button>
+    <button class="tab-btn" data-tab="special" aria-label="Özel Günler">🎉<span>Günler</span></button>
+    <button class="tab-btn" data-tab="settings" aria-label="Ayarlar">⚙️<span>Ayarlar</span></button>
+  </nav>
+
+  <!-- Yeni anı ekle butonu (sadece Anılar sekmesinde görünür) -->
+  <button class="fab" id="openModalBtn" aria-label="Yeni anı ekle" style="display:none;">+</button>
 
   <!-- Yeni anı ekleme / düzenleme modalı -->
   <div class="modal-overlay" id="modalOverlay">
