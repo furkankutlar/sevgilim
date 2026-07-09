@@ -84,7 +84,7 @@ body{
   width: 100%;
   max-width:880px;
   margin:0 auto;
-  padding:64px 20px 100px;
+  padding:64px 20px calc(96px + env(safe-area-inset-bottom));
   text-align:center;
 }
 
@@ -730,6 +730,80 @@ footer{
   -webkit-tap-highlight-color: transparent;
 }
 .fab:hover{ transform:scale(1.08); }
+
+/* ============================================================
+   SEKME SAYFALARI (tab-page) — GPU hızlandırmalı geçiş
+   ============================================================ */
+.tab-page{
+  display:none;
+}
+.tab-page.active{
+  display:block;
+  animation: tabFadeIn .32s cubic-bezier(.22,.61,.36,1);
+  will-change: opacity, transform;
+}
+@keyframes tabFadeIn{
+  from{ opacity:0; transform: translateY(10px) scale(.99); }
+  to{ opacity:1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- Alt sekme çubuğu ---------- */
+.tab-bar{
+  position:fixed;
+  bottom:0; left:0; right:0;
+  z-index:25;
+  display:flex;
+  background:rgba(253,246,240,.85);
+  backdrop-filter:blur(20px) saturate(1.4);
+  -webkit-backdrop-filter:blur(20px) saturate(1.4);
+  border-top:1px solid rgba(75,59,79,.08);
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+  box-shadow: 0 -8px 30px -18px rgba(75,59,79,.25);
+}
+
+.tab-btn{
+  flex:1;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  padding:8px 2px 6px;
+  border:none;
+  background:none;
+  font-size:21px;
+  line-height:1;
+  color:var(--plum);
+  opacity:.42;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transform:translateY(0) scale(1);
+  transition: opacity .22s cubic-bezier(.22,.61,.36,1), transform .22s cubic-bezier(.22,.61,.36,1);
+}
+.tab-btn span{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.01em;
+}
+.tab-btn:active{
+  transform: scale(.9);
+}
+.tab-btn.active{
+  opacity:1;
+  color:#C97F9E;
+  transform: translateY(-3px) scale(1.06);
+}
+.tab-btn.active::after{
+  content:"";
+  position:absolute;
+  bottom:2px;
+  left:50%;
+  transform:translateX(-50%);
+  width:4px; height:4px;
+  border-radius:50%;
+  background:#C97F9E;
+}
 
 @media (max-width:640px){
   .memories-grid{ grid-template-columns:1fr; }
