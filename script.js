@@ -767,3 +767,34 @@ sendNotifBtn.addEventListener('click', () => {
 fetchMemories();
 fetchBucketList();
 fetchSpecialDays();
+
+// ============================================================
+// SEKME ÇUBUĞU (ALT NAVİGASYON)
+// ============================================================
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabPages = document.querySelectorAll('.tab-page');
+
+function switchTab(tabName){
+  tabPages.forEach(page => {
+    const isTarget = page.dataset.page === tabName;
+    // Yeniden animasyonun her seferinde oynaması için önce sınıfı kaldırıp
+    // bir sonraki karede tekrar ekliyoruz (aksi halde tarayıcı "zaten aktifti" sanıp atlar)
+    page.classList.remove('active');
+    if(isTarget){
+      requestAnimationFrame(() => page.classList.add('active'));
+    }
+  });
+
+  tabButtons.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+
+  // "+" anı ekleme butonu sadece Anılar sekmesinde görünsün
+  openModalBtn.style.display = (tabName === 'memories') ? 'flex' : 'none';
+
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+tabButtons.forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
