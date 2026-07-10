@@ -904,8 +904,12 @@ footer{
   gap:10px;
   max-width:600px;
   margin:0 auto;
-  padding:0 4px 12px;
+  padding:0 4px 100px;
   min-height:200px;
+  max-height: calc(100dvh - 250px);
+  overflow-y:auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .chat-bubble{
@@ -941,14 +945,23 @@ footer{
 }
 
 .chat-input-row{
-  position:sticky;
-  bottom:calc(78px + env(safe-area-inset-bottom));
+  position:fixed;
+  left:0;
+  right:0;
+  bottom: calc(70px + env(safe-area-inset-bottom));
+  z-index:22;
   display:flex;
   gap:8px;
   max-width:600px;
-  margin:14px auto 0;
-  padding:8px 4px 4px;
-  background:var(--cream);
+  margin:0 auto;
+  padding:10px 16px;
+  background:rgba(253,246,240,.92);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+
+[data-theme="dark"] .chat-input-row{
+  background:rgba(33,25,37,.92);
 }
 
 .chat-input-row input{
