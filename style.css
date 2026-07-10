@@ -747,7 +747,6 @@ footer{
 .tab-page.active{
   display:block;
   animation: tabFadeIn .32s cubic-bezier(.22,.61,.36,1);
-  will-change: opacity, transform;
 }
 @keyframes tabFadeIn{
   from{ opacity:0; transform: translateY(10px) scale(.99); }
