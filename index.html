@@ -125,6 +125,21 @@
       </section>
     </div>
 
+    <!-- ================= MESAJLAR ================= -->
+    <div class="tab-page" data-page="chat">
+      <div class="chat-header">
+        <h2 class="section-title">Mesajlar</h2>
+        <p class="section-subtitle" id="chatIdentityLabel">Sen: —</p>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="memories-loading">Mesajlar yükleniyor...</div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="Bir mesaj yaz..." maxlength="500">
+        <button id="chatSendBtn" aria-label="Gönder">➤</button>
+      </div>
+    </div>
+
     <!-- ================= AYARLAR ================= -->
     <div class="tab-page" data-page="settings">
       <section class="notify-section">
@@ -132,6 +147,7 @@
         <p class="section-subtitle">Siteyi kendine göre ayarla</p>
         <div class="notify-buttons">
           <button class="btn-bucket-add" id="themeToggleBtn">🌙 Karanlık Moda Geç</button>
+          <button class="btn-bucket-add" id="changeIdentityBtn">🙋 Kimliğini Değiştir</button>
         </div>
       </section>
 
@@ -142,7 +158,6 @@
         <p class="section-subtitle">Bu cihazda bildirimleri aç, birbirinize anlık mesaj gönderin</p>
         <div class="notify-buttons">
           <button class="btn-bucket-add" id="enableNotifBtn">🔔 Bu Cihazda Bildirimleri Aç</button>
-          <button class="btn-bucket-add" id="sendNotifBtn">💌 Sevgiline Bildirim Gönder</button>
         </div>
       </section>
 
@@ -157,6 +172,7 @@
     <button class="tab-btn" data-tab="memories" aria-label="Anılar">📸<span>Anılar</span></button>
     <button class="tab-btn" data-tab="bucket" aria-label="Dateler">✨<span>Dateler</span></button>
     <button class="tab-btn" data-tab="special" aria-label="Özel Günler">🎉<span>Günler</span></button>
+    <button class="tab-btn" data-tab="chat" aria-label="Mesajlar">💬<span>Mesajlar</span></button>
     <button class="tab-btn" data-tab="settings" aria-label="Ayarlar">⚙️<span>Ayarlar</span></button>
   </nav>
 
@@ -204,6 +220,18 @@
         <div class="memory-date" id="detailDate"></div>
         <div class="memory-title detail-title" id="detailTitle"></div>
         <div class="memory-desc" id="detailDesc"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kimlik seçim modalı -->
+  <div class="modal-overlay" id="identityModalOverlay">
+    <div class="modal">
+      <h3>Sen kimsin? 💗</h3>
+      <p class="modal-note" style="margin-bottom:16px;">Mesajlarda doğru tarafta görünmen için bu cihazda kim olduğunu seç</p>
+      <div class="notify-buttons">
+        <button class="btn-bucket-add identity-btn" data-name="Furki">Furki</button>
+        <button class="btn-bucket-add identity-btn" data-name="Hilalişko">Hilalişko</button>
       </div>
     </div>
   </div>
