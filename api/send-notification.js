@@ -16,13 +16,13 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const { title, body } = req.body || {};
+    const { title, body, excludeOwner } = req.body || {};
     if (!title) {
       res.status(400).json({ error: 'title gerekli' });
       return;
     }
 
-    const { data: subscriptions, error } = await supabase
+    const { data: allSubscriptions, error } = await supabase
       .from('push_subscriptions')
       .select('*');
 
@@ -32,7 +32,12 @@ module.exports = async (req, res) => {
       return;
     }
 
-    console.log(`Bulunan abonelik sayısı: ${(subscriptions || []).length}`);
+    // Bir sohbet mesajı gönderenin kendi cihazına bildirim gitmesini istemiyoruz
+    const subscriptions = excludeOwner
+      ? (allSubscriptions || []).filter((s) => s.owner_name !== excludeOwner)
+      : (allSubscriptions || []);
+
+    console.log(`Bulunan abonelik sayısı: ${(allSubscriptions || []).length}, gönderilecek: ${subscriptions.length}`);
 
     const payload = JSON.stringify({ title, body: body || '', url: '/' });
 
