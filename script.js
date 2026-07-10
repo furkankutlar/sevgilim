@@ -768,6 +768,7 @@ fetchSpecialDays();
 // ============================================================
 const tabButtons = document.querySelectorAll('.tab-btn');
 const tabPages = document.querySelectorAll('.tab-page');
+let chatPollInterval = null;
 
 function switchTab(tabName){
   tabPages.forEach(page => {
@@ -786,6 +787,18 @@ function switchTab(tabName){
 
   // "+" anı ekleme butonu sadece Anılar sekmesinde görünsün
   openModalBtn.style.display = (tabName === 'memories') ? 'flex' : 'none';
+
+  // Mesajlar sekmesindeyken realtime çalışmasa bile mesajlar tazelensin diye
+  // her birkaç saniyede bir otomatik yenileme yapılır; sekmeden çıkınca durur.
+  if(tabName === 'chat'){
+    fetchMessages();
+    if(!chatPollInterval){
+      chatPollInterval = setInterval(fetchMessages, 3000);
+    }
+  }else if(chatPollInterval){
+    clearInterval(chatPollInterval);
+    chatPollInterval = null;
+  }
 
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
@@ -880,18 +893,31 @@ function formatChatTime(dateStr){
   return d.toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
+let lastMessageCount = 0;
+
 function renderMessages(messages){
   if(!messages || messages.length === 0){
     chatMessagesEl.innerHTML = '<div class="memories-empty">Henüz mesaj yok, ilk mesajı sen yaz! 💗</div>';
+    lastMessageCount = 0;
     return;
   }
+
+  const wasNearBottom = (chatMessagesEl.scrollHeight - chatMessagesEl.scrollTop - chatMessagesEl.clientHeight) < 80;
+  const isNewMessage = messages.length !== lastMessageCount;
+
   chatMessagesEl.innerHTML = messages.map(m => `
     <div class="chat-bubble ${m.sender === myIdentity ? 'mine' : 'theirs'}">
       ${escapeHtml(m.content)}
       <span class="chat-time">${m.sender === myIdentity ? '' : escapeHtml(m.sender) + ' · '}${formatChatTime(m.created_at)}</span>
     </div>
   `).join('');
-  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+
+  // Kullanıcı zaten en altta duruyorsa veya yeni bir mesaj geldiyse aşağı kaydır;
+  // eski mesajları okumak için yukarı kaydırmışsa yerini bozma
+  if(wasNearBottom || isNewMessage){
+    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+  }
+  lastMessageCount = messages.length;
 }
 
 async function fetchMessages(){
@@ -940,6 +966,8 @@ supabaseClient
   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
     fetchMessages();
   })
-  .subscribe();
+  .subscribe((status) => {
+    console.log('Realtime durumu:', status);
+  });
 
 fetchMessages();
