@@ -724,7 +724,8 @@ async function enableNotifications(){
       .upsert({
         endpoint: subJson.endpoint,
         p256dh: subJson.keys.p256dh,
-        auth: subJson.keys.auth
+        auth: subJson.keys.auth,
+        owner_name: myIdentity || null
       }, { onConflict: 'endpoint' });
 
     if(error){
@@ -740,12 +741,12 @@ async function enableNotifications(){
   }
 }
 
-async function sendNotification(title, body){
+async function sendNotification(title, body, excludeOwner){
   try{
     await fetch('/api/send-notification', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, body })
+      body: JSON.stringify({ title, body, excludeOwner: excludeOwner || null })
     });
   }catch(err){
     console.error('Bildirim gönderme hatası:', err);
@@ -753,13 +754,7 @@ async function sendNotification(title, body){
 }
 
 const enableNotifBtn = document.getElementById('enableNotifBtn');
-const sendNotifBtn = document.getElementById('sendNotifBtn');
-
 enableNotifBtn.addEventListener('click', enableNotifications);
-sendNotifBtn.addEventListener('click', () => {
-  const msg = prompt('Sevgiline ne mesajı göndermek istersin?');
-  if(msg && msg.trim()) sendNotification('Biz 💗', msg.trim());
-});
 
 // ============================================================
 // SAYFA YÜKLENİNCE
@@ -821,3 +816,130 @@ themeToggleBtn.addEventListener('click', () => {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   applyTheme(isDark ? 'light' : 'dark');
 });
+
+// ============================================================
+// KİMLİK (Furki / Hilalişko)
+// ============================================================
+const identityModalOverlay = document.getElementById('identityModalOverlay');
+const chatIdentityLabel = document.getElementById('chatIdentityLabel');
+const changeIdentityBtn = document.getElementById('changeIdentityBtn');
+
+let myIdentity = null;
+try{ myIdentity = localStorage.getItem('biz-identity'); }catch(e){}
+
+async function updateSubscriptionIdentity(){
+  if(!myIdentity) return;
+  try{
+    if(!('serviceWorker' in navigator)) return;
+    const registration = await navigator.serviceWorker.getRegistration();
+    if(!registration) return;
+    const subscription = await registration.pushManager.getSubscription();
+    if(!subscription) return;
+    const subJson = subscription.toJSON();
+    await supabaseClient
+      .from('push_subscriptions')
+      .update({ owner_name: myIdentity })
+      .eq('endpoint', subJson.endpoint);
+  }catch(e){
+    console.error('Kimlik güncelleme hatası:', e);
+  }
+}
+
+function setIdentity(name){
+  myIdentity = name;
+  try{ localStorage.setItem('biz-identity', name); }catch(e){}
+  chatIdentityLabel.textContent = `Sen: ${name}`;
+  identityModalOverlay.classList.remove('open');
+  fetchMessages();
+  updateSubscriptionIdentity();
+}
+
+document.querySelectorAll('.identity-btn').forEach(btn => {
+  btn.addEventListener('click', () => setIdentity(btn.dataset.name));
+});
+
+changeIdentityBtn.addEventListener('click', () => {
+  identityModalOverlay.classList.add('open');
+});
+
+if(myIdentity){
+  chatIdentityLabel.textContent = `Sen: ${myIdentity}`;
+}else{
+  identityModalOverlay.classList.add('open');
+}
+
+// ============================================================
+// MESAJLAR (SOHBET)
+// ============================================================
+const chatMessagesEl = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const chatSendBtn = document.getElementById('chatSendBtn');
+
+function formatChatTime(dateStr){
+  const d = new Date(dateStr);
+  return d.toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+function renderMessages(messages){
+  if(!messages || messages.length === 0){
+    chatMessagesEl.innerHTML = '<div class="memories-empty">Henüz mesaj yok, ilk mesajı sen yaz! 💗</div>';
+    return;
+  }
+  chatMessagesEl.innerHTML = messages.map(m => `
+    <div class="chat-bubble ${m.sender === myIdentity ? 'mine' : 'theirs'}">
+      ${escapeHtml(m.content)}
+      <span class="chat-time">${m.sender === myIdentity ? '' : escapeHtml(m.sender) + ' · '}${formatChatTime(m.created_at)}</span>
+    </div>
+  `).join('');
+  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+}
+
+async function fetchMessages(){
+  const { data, error } = await supabaseClient
+    .from('messages')
+    .select('*')
+    .order('created_at', { ascending: true })
+    .limit(200);
+
+  if(error){
+    console.error('Mesaj hatası:', error);
+    chatMessagesEl.innerHTML = '<div class="memories-error">Mesajlar yüklenirken bir hata oluştu.</div>';
+    return;
+  }
+  renderMessages(data);
+}
+
+async function sendMessage(){
+  const content = chatInput.value.trim();
+  if(!content) return;
+  if(!myIdentity){
+    identityModalOverlay.classList.add('open');
+    return;
+  }
+
+  chatSendBtn.disabled = true;
+  const { error } = await supabaseClient.from('messages').insert([{ sender: myIdentity, content }]);
+  chatSendBtn.disabled = false;
+
+  if(error){
+    console.error(error);
+    alert('Mesaj gönderilemedi, tekrar dener misin?');
+    return;
+  }
+
+  chatInput.value = '';
+  sendNotification(`💬 ${myIdentity}`, content, myIdentity);
+}
+
+chatSendBtn.addEventListener('click', sendMessage);
+chatInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
+
+// Yeni mesaj geldiğinde anlık güncelleme (Supabase Realtime)
+supabaseClient
+  .channel('messages-realtime')
+  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
+    fetchMessages();
+  })
+  .subscribe();
+
+fetchMessages();
