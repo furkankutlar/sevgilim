@@ -811,6 +811,7 @@ function switchTab(tabName){
   }else if(chatPollInterval){
     clearInterval(chatPollInterval);
     chatPollInterval = null;
+    hideTypingIndicator();
   }
 
   window.scrollTo({ top: 0, behavior: 'instant' });
@@ -903,6 +904,7 @@ const chatInput = document.getElementById('chatInput');
 const chatSendBtn = document.getElementById('chatSendBtn');
 const chatBadge = document.getElementById('chatBadge');
 const chatInputRow = document.getElementById('chatInputRow');
+const typingIndicator = document.getElementById('typingIndicator');
 
 function formatChatTime(dateStr){
   const d = new Date(dateStr);
@@ -1016,10 +1018,62 @@ async function sendMessage(){
 chatSendBtn.addEventListener('click', sendMessage);
 chatInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
 
+// ============================================================
+// "YAZIYOR..." GÖSTERGESİ
+// ============================================================
+let typingHideTimeout = null;
+let lastTypingSentAt = 0;
+
+function isChatTabActive(){
+  const chatPage = document.querySelector('.tab-page[data-page="chat"]');
+  return !!(chatPage && chatPage.classList.contains('active'));
+}
+
+function showTypingIndicator(senderName){
+  if(!isChatTabActive()) return;
+  typingIndicator.textContent = `${senderName} yazıyor...`;
+  typingIndicator.style.display = 'block';
+  clearTimeout(typingHideTimeout);
+  typingHideTimeout = setTimeout(() => {
+    typingIndicator.style.display = 'none';
+  }, 3000);
+}
+
+function hideTypingIndicator(){
+  clearTimeout(typingHideTimeout);
+  typingIndicator.style.display = 'none';
+}
+
+const typingChannel = supabaseClient.channel('typing-status', {
+  config: { broadcast: { self: false } }
+});
+
+typingChannel
+  .on('broadcast', { event: 'typing' }, (payload) => {
+    if(payload.payload && payload.payload.sender && payload.payload.sender !== myIdentity){
+      showTypingIndicator(payload.payload.sender);
+    }
+  })
+  .subscribe();
+
+chatInput.addEventListener('input', () => {
+  if(!myIdentity) return;
+  const now = Date.now();
+  if(now - lastTypingSentAt > 1500){
+    lastTypingSentAt = now;
+    typingChannel.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { sender: myIdentity }
+    });
+  }
+});
+
 // Yeni mesaj geldiğinde anlık güncelleme (Supabase Realtime)
 supabaseClient
   .channel('messages-realtime')
   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
+    hideTypingIndicator();
     const chatPage = document.querySelector('.tab-page[data-page="chat"]');
     if(chatPage && chatPage.classList.contains('active')){
       markMessagesAsRead().then(fetchMessages).then(updateChatBadge);
