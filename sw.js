@@ -19,7 +19,17 @@ self.addEventListener('push', (event) => {
     data: { url: data.url || '/' }
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Bu bir sohbet mesajıysa ve açık bir pencere zaten Mesajlar sekmesini
+      // gösteriyorsa, bildirimi hiç göstermeye gerek yok (WhatsApp'taki gibi)
+      const alreadyViewingChat = data.type === 'chat' && clientList.some((client) => client.url.includes('#chat'));
+      if (alreadyViewingChat) {
+        return;
+      }
+      return self.registration.showNotification(title, options);
+    })
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {
