@@ -134,10 +134,6 @@
       <div class="chat-messages" id="chatMessages">
         <div class="memories-loading">Mesajlar yükleniyor...</div>
       </div>
-      <div class="chat-input-row">
-        <input type="text" id="chatInput" placeholder="Bir mesaj yaz..." maxlength="500">
-        <button id="chatSendBtn" aria-label="Gönder">➤</button>
-      </div>
     </div>
 
     <!-- ================= AYARLAR ================= -->
@@ -175,6 +171,12 @@
     <button class="tab-btn" data-tab="chat" aria-label="Mesajlar"><span class="tab-icon-wrap">💬<span class="tab-badge" id="chatBadge" style="display:none;"></span></span><span>Mesajlar</span></button>
     <button class="tab-btn" data-tab="settings" aria-label="Ayarlar">⚙️<span>Ayarlar</span></button>
   </nav>
+
+  <!-- Sohbet mesaj giriş kutusu — animasyon çakışmasın diye sekmenin dışında, bağımsız -->
+  <div class="chat-input-row" id="chatInputRow" style="display:none;">
+    <input type="text" id="chatInput" placeholder="Bir mesaj yaz..." maxlength="500">
+    <button id="chatSendBtn" aria-label="Gönder">➤</button>
+  </div>
 
   <!-- Yeni anı ekle butonu (sadece Anılar sekmesinde görünür) -->
   <button class="fab" id="openModalBtn" aria-label="Yeni anı ekle" style="display:none;">+</button>
