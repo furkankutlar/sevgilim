@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const { title, body, excludeOwner } = req.body || {};
+    const { title, body, excludeOwner, type } = req.body || {};
     if (!title) {
       res.status(400).json({ error: 'title gerekli' });
       return;
@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
 
     console.log(`Bulunan abonelik sayısı: ${(allSubscriptions || []).length}, gönderilecek: ${subscriptions.length}`);
 
-    const payload = JSON.stringify({ title, body: body || '', url: '/' });
+    const payload = JSON.stringify({ title, body: body || '', url: '/', type: type || null });
 
     const results = await Promise.allSettled(
       (subscriptions || []).map((sub) =>
