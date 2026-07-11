@@ -787,6 +787,7 @@ function switchTab(tabName){
 
   // "+" anı ekleme butonu sadece Anılar sekmesinde görünsün
   openModalBtn.style.display = (tabName === 'memories') ? 'flex' : 'none';
+  chatInputRow.style.display = (tabName === 'chat') ? 'flex' : 'none';
 
   // Son açık kalınan sekmeyi hatırla (sayfa yenilenince oraya dönsün)
   try{ localStorage.setItem('biz-last-tab', tabName); }catch(e){}
@@ -901,6 +902,7 @@ const chatMessagesEl = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
 const chatSendBtn = document.getElementById('chatSendBtn');
 const chatBadge = document.getElementById('chatBadge');
+const chatInputRow = document.getElementById('chatInputRow');
 
 function formatChatTime(dateStr){
   const d = new Date(dateStr);
