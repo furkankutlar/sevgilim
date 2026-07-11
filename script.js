@@ -741,12 +741,12 @@ async function enableNotifications(){
   }
 }
 
-async function sendNotification(title, body, excludeOwner){
+async function sendNotification(title, body, excludeOwner, type){
   try{
     await fetch('/api/send-notification', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, body, excludeOwner: excludeOwner || null })
+      body: JSON.stringify({ title, body, excludeOwner: excludeOwner || null, type: type || null })
     });
   }catch(err){
     console.error('Bildirim gönderme hatası:', err);
@@ -790,6 +790,11 @@ function switchTab(tabName){
 
   // Son açık kalınan sekmeyi hatırla (sayfa yenilenince oraya dönsün)
   try{ localStorage.setItem('biz-last-tab', tabName); }catch(e){}
+
+  // URL'nin sonuna hangi sekmede olduğumuzu yazıyoruz; bildirim geldiğinde
+  // servis çalışanı (service worker) "kullanıcı zaten sohbeti mi görüyor?" diye
+  // buradan anlayıp, öyleyse bildirimi hiç göstermiyor.
+  try{ history.replaceState(null, '', tabName === 'home' ? (location.pathname + location.search) : ('#' + tabName)); }catch(e){}
 
   // Mesajlar sekmesindeyken realtime çalışmasa bile mesajlar tazelensin diye
   // her birkaç saniyede bir otomatik yenileme yapılır; sekmeden çıkınca durur.
@@ -1003,7 +1008,7 @@ async function sendMessage(){
   chatInput.value = '';
   await fetchMessages();
   chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-  sendNotification(`💬 ${myIdentity}`, content, myIdentity);
+  sendNotification(`💬 ${myIdentity}`, content, myIdentity, 'chat');
 }
 
 chatSendBtn.addEventListener('click', sendMessage);
