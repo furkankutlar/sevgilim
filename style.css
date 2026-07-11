@@ -792,6 +792,20 @@ footer{
   font-weight:700;
   letter-spacing:.01em;
 }
+.tab-icon-wrap{
+  position:relative;
+  display:inline-block;
+}
+.tab-badge{
+  position:absolute;
+  top:-3px;
+  right:-6px;
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:#E14F6B;
+  border:2px solid var(--cream);
+}
 .tab-btn:active{
   transform: scale(.9);
 }
@@ -919,6 +933,15 @@ footer{
   line-height:1.45;
   text-align:left;
   word-break:break-word;
+  box-shadow:0 4px 14px -8px rgba(75,59,79,.25);
+}
+
+.chat-bubble.bubble-new{
+  animation: bubbleIn .3s cubic-bezier(.22,.61,.36,1);
+}
+@keyframes bubbleIn{
+  from{ opacity:0; transform: translateY(10px) scale(.94); }
+  to{ opacity:1; transform: translateY(0) scale(1); }
 }
 
 .chat-bubble.mine{
