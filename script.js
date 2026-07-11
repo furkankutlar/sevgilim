@@ -791,9 +791,13 @@ function switchTab(tabName){
   // Mesajlar sekmesindeyken realtime çalışmasa bile mesajlar tazelensin diye
   // her birkaç saniyede bir otomatik yenileme yapılır; sekmeden çıkınca durur.
   if(tabName === 'chat'){
-    fetchMessages();
+    markMessagesAsRead().then(fetchMessages).then(() => {
+      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    });
     if(!chatPollInterval){
-      chatPollInterval = setInterval(fetchMessages, 3000);
+      chatPollInterval = setInterval(() => {
+        markMessagesAsRead().then(fetchMessages);
+      }, 3000);
     }
   }else if(chatPollInterval){
     clearInterval(chatPollInterval);
@@ -905,12 +909,16 @@ function renderMessages(messages){
   const wasNearBottom = (chatMessagesEl.scrollHeight - chatMessagesEl.scrollTop - chatMessagesEl.clientHeight) < 80;
   const isNewMessage = messages.length !== lastMessageCount;
 
-  chatMessagesEl.innerHTML = messages.map(m => `
-    <div class="chat-bubble ${m.sender === myIdentity ? 'mine' : 'theirs'}">
+  chatMessagesEl.innerHTML = messages.map(m => {
+    const mine = m.sender === myIdentity;
+    const seenLabel = (mine && m.read_at) ? ' · Görüldü ✓✓' : (mine ? ' · Gönderildi ✓' : '');
+    return `
+    <div class="chat-bubble ${mine ? 'mine' : 'theirs'}">
       ${escapeHtml(m.content)}
-      <span class="chat-time">${m.sender === myIdentity ? '' : escapeHtml(m.sender) + ' · '}${formatChatTime(m.created_at)}</span>
+      <span class="chat-time">${mine ? '' : escapeHtml(m.sender) + ' · '}${formatChatTime(m.created_at)}${seenLabel}</span>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   // Kullanıcı zaten en altta duruyorsa veya yeni bir mesaj geldiyse aşağı kaydır;
   // eski mesajları okumak için yukarı kaydırmışsa yerini bozma
@@ -918,6 +926,20 @@ function renderMessages(messages){
     chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
   }
   lastMessageCount = messages.length;
+}
+
+async function markMessagesAsRead(){
+  if(!myIdentity) return;
+  try{
+    const { error } = await supabaseClient
+      .from('messages')
+      .update({ read_at: new Date().toISOString() })
+      .neq('sender', myIdentity)
+      .is('read_at', null);
+    if(error) console.error('Okundu işaretleme hatası:', error);
+  }catch(e){
+    console.error('Okundu işaretleme hatası:', e);
+  }
 }
 
 async function fetchMessages(){
@@ -954,6 +976,8 @@ async function sendMessage(){
   }
 
   chatInput.value = '';
+  await fetchMessages();
+  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
   sendNotification(`💬 ${myIdentity}`, content, myIdentity);
 }
 
@@ -964,7 +988,12 @@ chatInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessag
 supabaseClient
   .channel('messages-realtime')
   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
-    fetchMessages();
+    const chatPage = document.querySelector('.tab-page[data-page="chat"]');
+    if(chatPage && chatPage.classList.contains('active')){
+      markMessagesAsRead().then(fetchMessages);
+    }else{
+      fetchMessages();
+    }
   })
   .subscribe((status) => {
     console.log('Realtime durumu:', status);
