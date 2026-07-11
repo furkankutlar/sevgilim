@@ -91,7 +91,7 @@ body{
   width: 100%;
   max-width:880px;
   margin:0 auto;
-  padding:64px 20px calc(96px + env(safe-area-inset-bottom));
+  padding:calc(28px + env(safe-area-inset-top)) 20px calc(96px + env(safe-area-inset-bottom));
   text-align:center;
 }
 
@@ -984,6 +984,20 @@ footer{
 
 [data-theme="dark"] .chat-input-row{
   background:rgba(33,25,37,.92);
+}
+
+.typing-indicator{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom: calc(126px + env(safe-area-inset-bottom));
+  z-index:21;
+  text-align:center;
+  font-size:12px;
+  font-style:italic;
+  color:var(--plum);
+  opacity:.6;
+  pointer-events:none;
 }
 
 .chat-input-row input{
