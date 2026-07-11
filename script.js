@@ -788,15 +788,18 @@ function switchTab(tabName){
   // "+" anı ekleme butonu sadece Anılar sekmesinde görünsün
   openModalBtn.style.display = (tabName === 'memories') ? 'flex' : 'none';
 
+  // Son açık kalınan sekmeyi hatırla (sayfa yenilenince oraya dönsün)
+  try{ localStorage.setItem('biz-last-tab', tabName); }catch(e){}
+
   // Mesajlar sekmesindeyken realtime çalışmasa bile mesajlar tazelensin diye
   // her birkaç saniyede bir otomatik yenileme yapılır; sekmeden çıkınca durur.
   if(tabName === 'chat'){
-    markMessagesAsRead().then(fetchMessages).then(() => {
+    markMessagesAsRead().then(fetchMessages).then(updateChatBadge).then(() => {
       chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
     });
     if(!chatPollInterval){
       chatPollInterval = setInterval(() => {
-        markMessagesAsRead().then(fetchMessages);
+        markMessagesAsRead().then(fetchMessages).then(updateChatBadge);
       }, 3000);
     }
   }else if(chatPollInterval){
@@ -869,6 +872,7 @@ function setIdentity(name){
   identityModalOverlay.classList.remove('open');
   fetchMessages();
   updateSubscriptionIdentity();
+  updateChatBadge();
 }
 
 document.querySelectorAll('.identity-btn').forEach(btn => {
@@ -891,6 +895,7 @@ if(myIdentity){
 const chatMessagesEl = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
 const chatSendBtn = document.getElementById('chatSendBtn');
+const chatBadge = document.getElementById('chatBadge');
 
 function formatChatTime(dateStr){
   const d = new Date(dateStr);
@@ -898,11 +903,13 @@ function formatChatTime(dateStr){
 }
 
 let lastMessageCount = 0;
+let renderedMessageIds = new Set();
 
 function renderMessages(messages){
   if(!messages || messages.length === 0){
     chatMessagesEl.innerHTML = '<div class="memories-empty">Henüz mesaj yok, ilk mesajı sen yaz! 💗</div>';
     lastMessageCount = 0;
+    renderedMessageIds = new Set();
     return;
   }
 
@@ -912,13 +919,16 @@ function renderMessages(messages){
   chatMessagesEl.innerHTML = messages.map(m => {
     const mine = m.sender === myIdentity;
     const seenLabel = (mine && m.read_at) ? ' · Görüldü ✓✓' : (mine ? ' · Gönderildi ✓' : '');
+    const isNewBubble = !renderedMessageIds.has(m.id);
     return `
-    <div class="chat-bubble ${mine ? 'mine' : 'theirs'}">
+    <div class="chat-bubble ${mine ? 'mine' : 'theirs'}${isNewBubble ? ' bubble-new' : ''}">
       ${escapeHtml(m.content)}
       <span class="chat-time">${mine ? '' : escapeHtml(m.sender) + ' · '}${formatChatTime(m.created_at)}${seenLabel}</span>
     </div>
   `;
   }).join('');
+
+  renderedMessageIds = new Set(messages.map(m => m.id));
 
   // Kullanıcı zaten en altta duruyorsa veya yeni bir mesaj geldiyse aşağı kaydır;
   // eski mesajları okumak için yukarı kaydırmışsa yerini bozma
@@ -926,6 +936,21 @@ function renderMessages(messages){
     chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
   }
   lastMessageCount = messages.length;
+}
+
+async function updateChatBadge(){
+  if(!myIdentity){ chatBadge.style.display = 'none'; return; }
+  try{
+    const { count, error } = await supabaseClient
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .neq('sender', myIdentity)
+      .is('read_at', null);
+    if(error){ console.error('Rozet hatası:', error); return; }
+    chatBadge.style.display = (count && count > 0) ? 'block' : 'none';
+  }catch(e){
+    console.error('Rozet hatası:', e);
+  }
 }
 
 async function markMessagesAsRead(){
@@ -990,9 +1015,10 @@ supabaseClient
   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
     const chatPage = document.querySelector('.tab-page[data-page="chat"]');
     if(chatPage && chatPage.classList.contains('active')){
-      markMessagesAsRead().then(fetchMessages);
+      markMessagesAsRead().then(fetchMessages).then(updateChatBadge);
     }else{
       fetchMessages();
+      updateChatBadge();
     }
   })
   .subscribe((status) => {
@@ -1000,3 +1026,14 @@ supabaseClient
   });
 
 fetchMessages();
+updateChatBadge();
+
+// ============================================================
+// SON AÇIK KALINAN SEKMEYİ HATIRLAMA
+// ============================================================
+try{
+  const savedTab = localStorage.getItem('biz-last-tab');
+  if(savedTab && savedTab !== 'home' && document.querySelector(`.tab-page[data-page="${savedTab}"]`)){
+    switchTab(savedTab);
+  }
+}catch(e){}
