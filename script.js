@@ -63,7 +63,6 @@ const celebrationResult = document.getElementById('celebrationResult');
 
 if(celebrationQuiz && celebrationResult){
   const quizQuestions = Array.from(celebrationQuiz.querySelectorAll('.quiz-question'));
-  const quizNextBtn = document.getElementById('quizNextBtn');
   const quizMessages = {
     sarilma: 'Birtanemmmm şimdi kollarımda olamasan da gelince ilk iş senin kollarında 🤍',
     mesaj: 'Gece güzel bir mesaj seni bekliyorrr sevgilimmmmm',
@@ -72,6 +71,7 @@ if(celebrationQuiz && celebrationResult){
     huzur: 'Bu ay dileğim de aynı: içinin hep huzur dolması ve hafif kalman 🍀',
     ask: 'Biraz daha aşk, biraz daha yakınlık, biraz daha biz — en güzel kombinasyon bu 💘'
   };
+  const originalResultHTML = celebrationResult.innerHTML;
   const quizHeartLayer = document.createElement('div');
   quizHeartLayer.className = 'heart-burst-layer';
   document.body.appendChild(quizHeartLayer);
@@ -98,24 +98,15 @@ if(celebrationQuiz && celebrationResult){
   }
 
   function openBubble(text, nextLabel){
-    if(!celebrationResult.querySelector('.quiz-result-copy')){
-      celebrationResult.innerHTML = '<div class="quiz-result-title">Cevabın</div><div class="quiz-result-text"><span class="quiz-result-copy"></span></div><button class="quiz-next-btn" type="button" id="quizNextBtn">Bir sonraki soru diyee</button>';
-    }
-    const copy = celebrationResult.querySelector('.quiz-result-copy');
-    if(copy){
-      copy.textContent = text;
-    }
+    celebrationResult.innerHTML = '<div class="quiz-result-title">Cevabın</div><div class="quiz-result-text"><span class="quiz-result-copy"></span></div><button class="quiz-next-btn" type="button" id="quizNextBtn">Bir sonraki soru diyee</button>';
+    celebrationResult.querySelector('.quiz-result-copy').textContent = text;
     celebrationResult.classList.add('open');
-    quizNextBtn.textContent = nextLabel || 'Bir sonraki soru diyee';
+    const liveNextBtn = celebrationResult.querySelector('#quizNextBtn');
+    if(liveNextBtn){
+      liveNextBtn.textContent = nextLabel || 'Bir sonraki soru diyee';
+    }
     spawnBurstHearts();
   }
-
-  quizNextBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    const activeQuestion = quizQuestions.find(q => q.classList.contains('active'));
-    const currentStep = activeQuestion ? Number(activeQuestion.dataset.step) : 0;
-    goToStep(currentStep + 1);
-  });
 
   function goToStep(step){
     quizQuestions.forEach(q => q.classList.remove('active'));
@@ -123,6 +114,11 @@ if(celebrationQuiz && celebrationResult){
     if(nextQuestion){
       nextQuestion.classList.add('active');
       celebrationResult.classList.remove('open');
+      celebrationResult.innerHTML = originalResultHTML;
+      const restoredBtn = celebrationResult.querySelector('#quizNextBtn');
+      if(restoredBtn){
+        restoredBtn.textContent = 'Bir sonraki soru diyee';
+      }
     }
   }
 
@@ -140,6 +136,14 @@ if(celebrationQuiz && celebrationResult){
     }else if(reply === 'huzur' || reply === 'ask'){
       openBubble(quizMessages[reply], 'Bitti 💗');
     }
+  });
+
+  celebrationResult.addEventListener('click', (e) => {
+    const btn = e.target.closest('#quizNextBtn');
+    if(!btn) return;
+    const activeQuestion = quizQuestions.find(q => q.classList.contains('active'));
+    const currentStep = activeQuestion ? Number(activeQuestion.dataset.step) : 0;
+    goToStep(currentStep + 1);
   });
 
 }
