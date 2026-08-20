@@ -98,11 +98,24 @@ if(celebrationQuiz && celebrationResult){
   }
 
   function openBubble(text, nextLabel){
-    celebrationResult.querySelector('.quiz-result-copy').textContent = text;
+    if(!celebrationResult.querySelector('.quiz-result-copy')){
+      celebrationResult.innerHTML = '<div class="quiz-result-title">Cevabın</div><div class="quiz-result-text"><span class="quiz-result-copy"></span></div><button class="quiz-next-btn" type="button" id="quizNextBtn">Bir sonraki soru diyee</button>';
+    }
+    const copy = celebrationResult.querySelector('.quiz-result-copy');
+    if(copy){
+      copy.textContent = text;
+    }
     celebrationResult.classList.add('open');
     quizNextBtn.textContent = nextLabel || 'Bir sonraki soru diyee';
     spawnBurstHearts();
   }
+
+  quizNextBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const activeQuestion = quizQuestions.find(q => q.classList.contains('active'));
+    const currentStep = activeQuestion ? Number(activeQuestion.dataset.step) : 0;
+    goToStep(currentStep + 1);
+  });
 
   function goToStep(step){
     quizQuestions.forEach(q => q.classList.remove('active'));
@@ -129,11 +142,6 @@ if(celebrationQuiz && celebrationResult){
     }
   });
 
-  quizNextBtn.addEventListener('click', () => {
-    const activeQuestion = quizQuestions.find(q => q.classList.contains('active'));
-    const currentStep = activeQuestion ? Number(activeQuestion.dataset.step) : 0;
-    goToStep(currentStep + 1);
-  });
 }
 
 // ============================================================
