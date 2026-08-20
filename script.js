@@ -63,6 +63,7 @@ const celebrationResult = document.getElementById('celebrationResult');
 
 if(celebrationQuiz && celebrationResult){
   const quizQuestions = Array.from(celebrationQuiz.querySelectorAll('.quiz-question'));
+  const quizNextBtn = document.getElementById('quizNextBtn');
   const quizMessages = {
     sarilma: 'Birtanemmmm şimdi kollarımda olamasan da gelince ilk iş senin kollarında 🤍',
     mesaj: 'Gece güzel bir mesaj seni bekliyorrr sevgilimmmmm',
@@ -71,23 +72,67 @@ if(celebrationQuiz && celebrationResult){
     huzur: 'Bu ay dileğim de aynı: içinin hep huzur dolması ve hafif kalman 🍀',
     ask: 'Biraz daha aşk, biraz daha yakınlık, biraz daha biz — en güzel kombinasyon bu 💘'
   };
+  const quizHeartLayer = document.createElement('div');
+  quizHeartLayer.className = 'heart-burst-layer';
+  document.body.appendChild(quizHeartLayer);
+
+  function spawnBurstHearts(){
+    quizHeartLayer.innerHTML = '';
+    const hearts = ['🤍','💗','💕','💖'];
+    const count = 18;
+    for(let i = 0; i < count; i++){
+      const heart = document.createElement('div');
+      heart.className = 'heart-burst';
+      heart.textContent = hearts[i % hearts.length];
+      const angle = (Math.PI * 2 * i) / count;
+      const distance = 180 + Math.random() * 140;
+      const dx = Math.cos(angle) * distance;
+      const dy = Math.sin(angle) * distance;
+      heart.style.setProperty('--dx', dx + 'px');
+      heart.style.setProperty('--dy', dy + 'px');
+      heart.style.animationDelay = (i * 20) + 'ms';
+      quizHeartLayer.appendChild(heart);
+      setTimeout(() => heart.remove(), 900);
+    }
+    setTimeout(() => { quizHeartLayer.innerHTML = ''; }, 950);
+  }
+
+  function openBubble(text, nextLabel){
+    celebrationResult.querySelector('.quiz-result-copy').textContent = text;
+    celebrationResult.classList.add('open');
+    quizNextBtn.textContent = nextLabel || 'Bir sonraki soru diyee';
+    spawnBurstHearts();
+  }
+
+  function goToStep(step){
+    quizQuestions.forEach(q => q.classList.remove('active'));
+    const nextQuestion = quizQuestions.find(q => Number(q.dataset.step) === step);
+    if(nextQuestion){
+      nextQuestion.classList.add('active');
+      celebrationResult.classList.remove('open');
+    }
+  }
 
   celebrationQuiz.addEventListener('click', (e) => {
     const btn = e.target.closest('.quiz-option');
     if(!btn) return;
-    const text = quizMessages[btn.dataset.reply] || 'Sana özel bir kutlama hazırlıyorum 💗';
-    celebrationResult.innerHTML = `<span class="quiz-burst">💥</span><span class="quiz-result-copy">${text}</span>`;
+    const reply = btn.dataset.reply;
     celebrationQuiz.querySelectorAll('.quiz-option').forEach(option => option.classList.toggle('selected', option === btn));
+    if(reply === 'sarilma'){
+      openBubble('Birtanemmmm şimdi kollarımda olamasan da gelince ilk iş senin kollarında 🤍', 'Bir sonraki soru diyee');
+    }else if(reply === 'mesaj'){
+      openBubble('Gece güzel bir mesaj seni bekliyorrr sevgilimmmmm', 'Bir sonraki soru diyee');
+    }else if(reply === 'gece' || reply === 'date'){
+      openBubble(quizMessages[reply], 'Bir sonraki soru diyee');
+    }else if(reply === 'huzur' || reply === 'ask'){
+      openBubble(quizMessages[reply], 'Bitti 💗');
+    }
   });
 
-  celebrationQuiz.addEventListener('click', (e) => {
-    const nextBtn = e.target.closest('.quiz-next-btn');
-    if(!nextBtn) return;
-    const currentStep = Number(nextBtn.closest('.quiz-question').dataset.step);
-    const nextQuestion = quizQuestions.find(q => Number(q.dataset.step) === currentStep + 1);
-    if(!nextQuestion) return;
-    quizQuestions.forEach(q => q.classList.remove('active'));
-    nextQuestion.classList.add('active');
+  quizNextBtn.addEventListener('click', () => {
+    const activeQuestion = quizQuestions.find(q => q.classList.contains('active'));
+    const currentStep = activeQuestion ? Number(activeQuestion.dataset.step) : 0;
+    goToStep(currentStep + 1);
   });
 }
 
