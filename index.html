@@ -66,16 +66,55 @@
       </p>
 
       <section class="celebration-card" aria-label="2. ay kutlaması">
-        <div class="celebration-gif-wrap">
-          <img
-            src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbG45Z2F1dTQ0b3Y5Z3N2eXF5bG9sN2F6bXZrY2N4Y3R1aWZlYyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/vFKqnCdLPNOKc/giphy.gif"
-            alt="Kutlama yapan tatlı bir GIF"
-            loading="lazy">
+        <div class="celebration-stage">
+          <div class="celebration-sparkles" aria-hidden="true">
+            <span>✨</span><span>💗</span><span>✨</span><span>🎉</span><span>💫</span>
+          </div>
+          <div class="celebration-gif-wrap">
+            <img
+              src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbG45Z2F1dTQ0b3Y5Z3N2eXF5bG9sN2F6bXZrY2N4Y3R1aWZlYyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/vFKqnCdLPNOKc/giphy.gif"
+              alt="Kutlama yapan tatlı bir GIF"
+              loading="lazy">
+          </div>
         </div>
         <div class="celebration-copy">
           <div class="celebration-badge">2. Ayımız Kutlu Olsun 💗</div>
-          <h2 class="celebration-title">Seninle her ay daha güzel.</h2>
-          <p class="celebration-text">Bu küçük köşeyi sadece bize ait bir kutlama alanı gibi düşündüm; biraz sevgi, biraz eğlence, biraz da GIF.</p>
+          <h2 class="celebration-title">Mini bir oyun oynayalım mı?</h2>
+          <p class="celebration-text">Sana birkaç tatlı soru hazırladım; cevaplarına göre kutlama mesajı değişecek.</p>
+
+          <div class="quiz-shell" id="celebrationQuiz">
+            <div class="quiz-question active" data-step="0">
+              <div class="quiz-label">1 / 3</div>
+              <div class="quiz-text">Bugün seni en çok ne mutlu eder?</div>
+              <div class="quiz-options">
+                <button class="quiz-option" data-reply="sarilma">Sımsıkı sarılmak</button>
+                <button class="quiz-option" data-reply="mesaj">Tatlı bir mesaj</button>
+                <button class="quiz-option" data-reply="gif">Gif ve kahkaha</button>
+              </div>
+            </div>
+            <div class="quiz-question" data-step="1">
+              <div class="quiz-label">2 / 3</div>
+              <div class="quiz-text">Birlikte en sevdiğin an?</div>
+              <div class="quiz-options">
+                <button class="quiz-option" data-reply="gece">Gece sohbetleri</button>
+                <button class="quiz-option" data-reply="date">Date planları</button>
+                <button class="quiz-option" data-reply="surpriz">Sürprizler</button>
+              </div>
+            </div>
+            <div class="quiz-question" data-step="2">
+              <div class="quiz-label">3 / 3</div>
+              <div class="quiz-text">Bu ay için tek dileğin ne?</div>
+              <div class="quiz-options">
+                <button class="quiz-option" data-reply="huzur">Bol huzur</button>
+                <button class="quiz-option" data-reply="ask">Daha çok aşk</button>
+                <button class="quiz-option" data-reply="kacamak">Küçük bir kaçamak</button>
+              </div>
+            </div>
+            <div class="quiz-result" aria-live="polite">
+              <div class="quiz-result-title">Cevabını seç, sonucu ben şekillendireyim.</div>
+              <div class="quiz-result-text" id="celebrationResult">Sana özel bir mini kutlama hazır.</div>
+            </div>
+          </div>
         </div>
       </section>
 
