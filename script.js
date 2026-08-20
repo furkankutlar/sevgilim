@@ -62,24 +62,32 @@ const celebrationQuiz = document.getElementById('celebrationQuiz');
 const celebrationResult = document.getElementById('celebrationResult');
 
 if(celebrationQuiz && celebrationResult){
+  const quizQuestions = Array.from(celebrationQuiz.querySelectorAll('.quiz-question'));
   const quizMessages = {
-    sarilma: 'O zaman ilk planım belli: sana sarılmak ve tüm gün o ana geri dönmek 💗',
-    mesaj: 'Tamamdır, sana kalpten bir mesaj borçluyum; bu ay bol bol güzel cümle var ✨',
-    gif: 'Eğlence modu açık! Sana GIF, kahkaha ve minik sürprizler geliyor 🎉',
+    sarilma: 'Birtanemmmm şimdi kollarımda olamasan da gelince ilk iş senin kollarında 🤍',
+    mesaj: 'Gece güzel bir mesaj seni bekliyorrr sevgilimmmmm',
     gece: 'Gece sohbetleri zaten bizim gizli favorimiz; bu ay daha uzunları olsun 🌙',
     date: 'Date planları en sevdiğim şeylerden; bir mini kaçamak çok yakışır 💞',
-    surpriz: 'Sürprizler tamam, geriye sadece seni gülümsetmek kalıyor 🎁',
     huzur: 'Bu ay dileğim de aynı: içinin hep huzur dolması ve hafif kalman 🍀',
-    ask: 'Biraz daha aşk, biraz daha yakınlık, biraz daha biz — en güzel kombinasyon bu 💘',
-    kacamak: 'Küçük bir kaçamak şart oldu; tatlı bir rota seçip kaybolalım ✨'
+    ask: 'Biraz daha aşk, biraz daha yakınlık, biraz daha biz — en güzel kombinasyon bu 💘'
   };
 
   celebrationQuiz.addEventListener('click', (e) => {
     const btn = e.target.closest('.quiz-option');
     if(!btn) return;
     const text = quizMessages[btn.dataset.reply] || 'Sana özel bir kutlama hazırlıyorum 💗';
-    celebrationResult.textContent = text;
+    celebrationResult.innerHTML = `<span class="quiz-burst">💥</span><span class="quiz-result-copy">${text}</span>`;
     celebrationQuiz.querySelectorAll('.quiz-option').forEach(option => option.classList.toggle('selected', option === btn));
+  });
+
+  celebrationQuiz.addEventListener('click', (e) => {
+    const nextBtn = e.target.closest('.quiz-next-btn');
+    if(!nextBtn) return;
+    const currentStep = Number(nextBtn.closest('.quiz-question').dataset.step);
+    const nextQuestion = quizQuestions.find(q => Number(q.dataset.step) === currentStep + 1);
+    if(!nextQuestion) return;
+    quizQuestions.forEach(q => q.classList.remove('active'));
+    nextQuestion.classList.add('active');
   });
 }
 
