@@ -202,6 +202,75 @@ h1 em{
   opacity:.85;
 }
 
+.celebration-card{
+  display:grid;
+  grid-template-columns: 180px 1fr;
+  gap:18px;
+  align-items:center;
+  margin:34px auto 0;
+  max-width:760px;
+  background:rgba(255,255,255,.62);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.72);
+  border-radius:28px;
+  padding:18px;
+  box-shadow:0 12px 30px -14px rgba(75,59,79,.2);
+  text-align:left;
+}
+
+.celebration-gif-wrap{
+  width:100%;
+  aspect-ratio: 1 / 1;
+  border-radius:22px;
+  overflow:hidden;
+  background:linear-gradient(160deg, rgba(247,201,218,.45), rgba(217,204,242,.35));
+}
+
+.celebration-gif-wrap img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.celebration-copy{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.celebration-badge{
+  display:inline-flex;
+  align-self:flex-start;
+  padding:6px 12px;
+  border-radius:999px;
+  background:rgba(247,201,218,.55);
+  color:var(--plum);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.03em;
+}
+
+.celebration-title{
+  font-family:'Fraunces', serif;
+  font-weight:600;
+  font-size:clamp(22px, 3.4vw, 32px);
+  line-height:1.2;
+}
+
+.celebration-text{
+  font-size:15px;
+  line-height:1.7;
+  opacity:.75;
+}
+
+@media (max-width: 640px){
+  .celebration-card{
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ---------- Spotify kartı ---------- */
 .custom-spotify-card {
   display: flex;
@@ -225,6 +294,17 @@ h1 em{
   transform: translateY(-5px);
   box-shadow: 0 16px 36px -14px rgba(75, 59, 79, 0.25);
 }
+
+[data-theme="dark"] .celebration-card,
+[data-theme="dark"] .custom-spotify-card,
+[data-theme="dark"] .unit,
+[data-theme="dark"] .memory-card,
+[data-theme="dark"] .special-card,
+[data-theme="dark"] .bucket-list-container{
+  background:rgba(33,25,37,.62);
+  border-color:rgba(255,255,255,.08);
+}
+
 .spotify-album-art {
   width: 64px; height: 64px;
   border-radius: 50%;
