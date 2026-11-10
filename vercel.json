@@ -1,0 +1,5 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": { "api/price-tracker.js": { "maxDuration": 180 } },
+  "crons": [{ "path": "/api/price-tracker?job=daily", "schedule": "0 13 * * *" }]
+}

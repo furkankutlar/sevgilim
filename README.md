@@ -51,6 +51,36 @@ gönderilmez; bu durumda ilk bildirim kaçmış olabilir.
 
 ## Erişim sınırları
 
+### İndirim defteri
+
+Ana sayfadaki İndirim defterimiz kartı `/\#prices` bölümünü açar. İlk iki ürün Gratis
+Pantene 10015186 ve Watsons Urban Care 1300649'dur; yeni bağlantılar da eklenebilir
+(en fazla 10 ürün). Ürünler kişi bazında duraklatılabilir ve hedef fiyat verilebilir.
+
+Fiyatlar yalnızca izin verilen iki mağazanın eşleşen ürün JSON-LD Offer verisinden,
+TL olarak ve doğrulanmış stok durumuyla okunur. İlgisiz ürün fiyatı, CAPTCHA/hata
+sayfası, başka sunucuya yönlendirme ve belirsiz fiyatlar reddedilir. Başarısız
+kontrol önceki fiyatı ve son başarılı kontrol zamanını değiştirmez.
+
+`vercel.json` günlük 13:00 UTC (İstanbul 16:00, Hobby zamanlama aralığıyla 16–17)
+kontrolünü `/api/price-tracker?job=daily` üzerinden çalıştırır. `CRON_SECRET` yalnızca
+sunucudadır. Private Vercel Blob deposu projeye bağlanmıştır; SDK otomatik sağlanan
+`BLOB_READ_WRITE_TOKEN` ile kalıcı state kullanır. Yazmalar ETag koşuluyla yapılır;
+10 dakikalık lease aynı kontrolün paralel çalışmasını önler. Elle kontroller dahil
+kontroller arasında en az 6 saat vardır. Uygulamanın açık olması gerekmez.
+
+İlk fiyat bildirimsiz başlangıçtır. Hedef yoksa takipte gözlenen en yüksek geçerli
+fiyattan en az %5 ve 5 TL düşüş; hedef varsa hedefin altına inen gerçek düşüş gerekir.
+22:00–09:00 İstanbul saatinde bildirim yoktur. Kişi başına günde en fazla tek özet
+vardır; aynı veya daha yüksek indirim fiyatı yeniden bildirilmez. Yalnızca tam eşleşen
+kişi adına kayıtlı cihazlara gider. Mağaza/kargo/üyelik/sepete özel fiyatlar dahil değildir.
+
+Özetin kalıcı gönderim talebi push'tan önce yazılır. Bu, çökme ve tekrar çalışmada
+bildirim yağmurunu engeller; talep ile push arasındaki çökmede veya sağlayıcı hatasında
+o özet kaçabilir. Otomatik agresif yeniden gönderim yapılmaz. Bu tercih yinelenen
+bildirimleri engellemeye öncelik verir. Gerçek giriş ertelendiği için liste ayarları
+mevcut uygulamanın ortak erişim modeliyle çalışır; yalnızca saklama dosyası private'dır.
+
 Mevcut isim seçimi bir kullanıcı doğrulaması değildir. Bu güncelleme gerçek oturum
 girişi veya veritabanı yetkilendirmesi eklemez. Özel kullanımın güvenceye alınması
 için Supabase Auth ile yalnızca iki hesaba izin veren RLS ve Storage kuralları,

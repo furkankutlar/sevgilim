@@ -1,5 +1,5 @@
-const SHELL_CACHE = 'biz-shell-2026-11-10-v3';
-const SHELL_PATHS = ['/', '/index.html', '/style.css', '/script.js', '/chat.js', '/mobile.js', '/daily-question.js', '/manifest.json',
+const SHELL_CACHE = 'biz-shell-2026-11-10-v4';
+const SHELL_PATHS = ['/', '/index.html', '/style.css', '/script.js', '/chat.js', '/mobile.js', '/daily-question.js', '/price-tracker.js', '/manifest.json',
   '/vendor/supabase.js', '/vendor/cropper.min.js', '/vendor/cropper.min.css',
   '/icons/icon.svg', '/icons/apple-touch-icon.png', '/icons/icon-192.png', '/icons/icon-512.png'];
 
@@ -51,6 +51,7 @@ self.addEventListener('push', event => {
   catch(error){ data = { body: event.data?.text() || '' }; }
   const icon = 'https://gxsagwouvimjlzbovyay.supabase.co/storage/v1/object/public/memory-photos/resim1.jpg';
   const options = { body: data.body || '', icon, badge: icon,
+    ...(data.type === 'price' && typeof data.tag === 'string' ? {tag:data.tag.slice(0,100)} : {}),
     data: { url: safeNotificationUrl(data.url) } };
   event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
     const viewingChat = data.type === 'chat' && clients.some(client =>

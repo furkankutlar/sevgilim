@@ -967,7 +967,7 @@ function switchTab(tabName){
   });
 
   tabButtons.forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tab === tabName);
+    btn.classList.toggle('active', btn.dataset.tab === tabName || (tabName === 'prices' && btn.dataset.tab === 'home'));
   });
 
   // "+" anı ekleme butonu sadece Anılar sekmesinde görünsün

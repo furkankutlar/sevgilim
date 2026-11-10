@@ -78,6 +78,8 @@
         <button class="btn-secondary" id="dailyQuestionRetry" type="button" hidden>Tekrar dene</button>
       </section>
 
+      <button class="price-shortcut" id="openPriceTracker" type="button"><span><strong>İndirim defterimiz</strong><small>Gratis &amp; Watsons istek listesi</small></span><span aria-hidden="true">↗</span></button>
+
       <section class="together-note" aria-label="Bize dair">
         <span class="together-heart" aria-hidden="true">♡</span>
         <div><h2>Biriktirdiğimiz her şey, burada.</h2><p>“Zaman geçtikçe anladım ki, sana olan aşkım saatlerle, günlerle değil; kalbimin her atışıyla ölçülüyor.”</p></div>
@@ -157,6 +159,21 @@
       <div class="chat-messages" id="chatMessages" aria-label="Sohbet mesajları">
         <div class="memories-loading">Mesajlar yükleniyor...</div>
       </div>
+    </div>
+
+    <div class="tab-page" data-page="prices">
+      <button class="btn-secondary" id="priceBackBtn" type="button">← Ana sayfa</button>
+      <div class="price-heading"><span class="eyebrow">Biraz da kendimize</span><h2 class="section-title">İndirim <em>defterimiz.</em></h2>
+      <p class="section-subtitle">İstediğimiz ürünler, doğru zamanı beklesin.</p></div>
+      <div class="price-rules"><strong>Az bildirim, gerçek fiyat düşüşü.</strong><p>Her gün 16:00–17:00 arasında kontrol edilir. İlk fiyatta bildirim yok. Varsayılan eşik: en az %5 ve 5 TL düşüş. Hedef fiyat girersen yalnızca o fiyata veya altına indiğinde haber verilir. Kişi başına günde en fazla bir özet; 22:00–09:00 arası sessiz.</p><p>Üyelik ve sepete özel fırsatlar dahil değil. Kargo hariç, herkese açık online fiyatlar takip edilir.</p></div>
+      <form class="price-add-form" id="priceAddForm">
+        <label for="priceProductUrl">Yeni ürün bağlantısı</label><input id="priceProductUrl" type="url" inputmode="url" maxlength="1000" placeholder="Gratis veya Watsons ürün linki" required>
+        <div class="price-form-row"><div><label for="priceProductOwner">Bildirim kime gelsin?</label><select id="priceProductOwner"><option value="Hilalişko">Hilalişko</option><option value="Furki">Furki</option></select></div><button class="btn-primary" id="priceAddBtn" type="submit">Listeye ekle</button></div>
+      </form>
+      <div class="price-toolbar"><button class="btn-secondary" id="priceCheckBtn" type="button">Fiyatları kontrol et</button><span id="priceLastCheck"></span></div>
+      <p class="inline-feedback" id="priceFeedback" role="status" aria-live="polite"></p>
+      <div class="price-list" id="priceList"><div class="memories-loading">İstek listesi yükleniyor…</div></div>
+      <p class="price-footnote">Aynı veya daha yüksek indirim fiyatı için tekrar bildirim gönderilmez. Kontroller arasında en az 6 saat vardır. Mağaza fiyatı okunamazsa önceki kayıt korunur ve eski kontrol tarihi gösterilir.</p>
     </div>
 
     <!-- ================= AYARLAR ================= -->
@@ -265,6 +282,7 @@
   <script src="script.js"></script>
   <script src="chat.js"></script>
   <script src="daily-question.js"></script>
+  <script src="price-tracker.js"></script>
   <script src="mobile.js"></script>
 </body>
 </html>
