@@ -60,5 +60,10 @@ module.exports=async(req,res)=>{
       return res.status(found?200:404).json(found?{ok:true}:{error:'Ürün bulunamadı.'});
     }
     return res.status(400).json({error:'Geçersiz işlem.'});
-  }catch(error){console.error('Price tracker unavailable',error.name);return res.status(503).json({error:'Takip servisine şu anda ulaşılamıyor. Kayıtların korunuyor; biraz sonra tekrar dene.'});}
+  }catch(error){
+    let detail=String(error.message||'').slice(0,500);
+    for(const name of ['BLOB_READ_WRITE_TOKEN','CRON_SECRET','VAPID_PRIVATE_KEY','SUPABASE_ANON_KEY'])if(process.env[name])detail=detail.replaceAll(process.env[name],'[redacted]');
+    console.error('Price tracker unavailable',error.name,detail);
+    return res.status(503).json({error:'Takip servisine şu anda ulaşılamıyor. Kayıtların korunuyor; biraz sonra tekrar dene.'});
+  }
 };
