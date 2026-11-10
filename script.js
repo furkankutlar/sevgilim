@@ -180,7 +180,10 @@ window.addEventListener('offline', updateConnectionStatus);
 updateConnectionStatus();
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => console.warn('Çevrimdışı kullanım hazırlanamadı.'));
+    navigator.serviceWorker.register('sw.js')
+      .then(() => navigator.serviceWorker.ready)
+      .then(() => updateSubscriptionIdentity())
+      .catch(() => console.warn('Çevrimdışı kullanım hazırlanamadı.'));
   });
 }
 
@@ -924,9 +927,14 @@ async function sendNotification(title, body, excludeOwner, type){
     });
     if(!response.ok) throw new Error('Bildirim iletilemedi: ' + response.status);
     const result = await response.json();
+    if(result.recipientRegistered === false){
+      chatFeedback.textContent = 'Mesaj kaydedildi. Karşı tarafın bildirim kaydı doğru kişiyle eşleşmiyor; Ayarlar’dan kimliğini seçip bildirimleri açmalı.';
+      return;
+    }
     if(result.total > 0 && result.sent === 0) throw new Error('Bildirim iletilemedi.');
   }catch(err){
     console.error('Bildirim gönderme hatası:', err);
+    chatFeedback.textContent = 'Mesaj kaydedildi, ancak bildirim iletilemedi. Karşı tarafın bildirim ayarlarını kontrol edin.';
   }
 }
 
@@ -1030,14 +1038,21 @@ async function updateSubscriptionIdentity(){
     const subscription = await registration.pushManager.getSubscription();
     if(!subscription) return;
     const subJson = subscription.toJSON();
-    await supabaseClient
+    const { error } = await supabaseClient
       .from('push_subscriptions')
-      .update({ owner_name: myIdentity })
-      .eq('endpoint', subJson.endpoint);
+      .upsert({ endpoint: subJson.endpoint, p256dh: subJson.keys.p256dh,
+        auth: subJson.keys.auth, owner_name: myIdentity }, { onConflict: 'endpoint' });
+    if(error) throw error;
   }catch(e){
     console.error('Kimlik güncelleme hatası:', e);
   }
 }
+
+// Önceden seçilmiş isimde de eşleştir; kimlik seçimine tekrar basmak gerekmesin.
+window.addEventListener('online', () => void updateSubscriptionIdentity());
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') void updateSubscriptionIdentity();
+});
 
 function setIdentity(name){
   if(!['Furki', 'Hilalişko'].includes(name)) return;

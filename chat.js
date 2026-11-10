@@ -235,8 +235,8 @@ async function sendChatContent(value){
     savePendingMessages(sender);
     chatFeedback.textContent = '';
     // Yinelenen kayıt uzlaştırılırken yeniden bildirim gönderme.
-    if(!reconciled) void sendNotification(`💬 ${sender}`, content, sender, 'chat');
     await refreshChat();
+    if(!reconciled) void sendNotification(`💬 ${sender}`, content, sender, 'chat');
     chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
     return true;
   }catch(error){

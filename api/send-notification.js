@@ -54,6 +54,8 @@ module.exports = async (req, res) => {
       .select('endpoint,p256dh,auth,owner_name');
     if(error) throw error;
     const subscriptions = (allSubscriptions || []).filter(s => !excludeOwner || s.owner_name !== excludeOwner);
+    const recipient = excludeOwner === 'Furki' ? 'Hilalişko' : excludeOwner === 'Hilalişko' ? 'Furki' : null;
+    const recipientRegistered = !recipient || subscriptions.some(s => s.owner_name === recipient);
     const url = type === 'chat' ? '/#chat' : title.includes('anı') ? '/#memories' : '/#bucket';
     const payload = JSON.stringify({ title: title.trim(), body, url, type });
     const results = await Promise.allSettled(subscriptions.map(sub => webpush.sendNotification(
@@ -66,10 +68,13 @@ module.exports = async (req, res) => {
       if(cleanupError) console.warn('Süresi biten bildirim abonelikleri temizlenemedi.');
     }
     const sent = results.filter(result => result.status === 'fulfilled').length;
+    const failureCodes = results.filter(result => result.status === 'rejected')
+      .map(result => Number(result.reason?.statusCode) || 'transport');
+    console.info('Notification delivery', JSON.stringify({ total: subscriptions.length, sent, recipientRegistered, failureCodes }));
     if(subscriptions.length > 0 && sent === 0){
       return res.status(502).json({ error: 'Bildirim hizmeti yanıt vermedi.', sent, total: subscriptions.length });
     }
-    return res.status(200).json({ sent, total: subscriptions.length });
+    return res.status(200).json({ sent, total: subscriptions.length, recipientRegistered });
   }catch(error){
     console.error('Bildirim hizmeti isteği başarısız.');
     return res.status(500).json({ error: 'Bildirim gönderilemedi.' });

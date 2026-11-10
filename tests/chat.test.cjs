@@ -6,7 +6,7 @@ const path = require('node:path');
 const { webcrypto } = require('node:crypto');
 const root = path.join(__dirname, '..');
 
-function app(messages = [], { storage = new Map(), failStorageWrites = false } = {}){
+function app(messages = [], { storage = new Map(), failStorageWrites = false, worker = null, identity = 'Furki' } = {}){
   const rows = messages.map(row => ({ ...row }));
   const calls = [], channels = new Map(), intervals = new Map(), events = new Map();
   let intervalId = 0, failInsert = false, loseInsertResponse = false;
@@ -28,6 +28,9 @@ function app(messages = [], { storage = new Map(), failStorageWrites = false } =
     querySelectorAll: () => [], addEventListener: (name, callback) => events.set(name, callback) };
   const window = { addEventListener: (name, callback) => events.set(name, callback), scrollTo(){}, matchMedia: () => ({ matches: false }) };
   function from(table){
+    if(table === 'push_subscriptions') return { upsert: async (record, options) => {
+      calls.push({table,operation:'upsert',record,options}); return {error:null};
+    }};
     let operation = 'select', limit = Infinity, filter = null, ids = null, neq = null, eq = null, isNull = null, input;
     const query = {
       select(columns, options){ query.columns = columns; query.head = options?.head; return query; },
@@ -71,8 +74,8 @@ function app(messages = [], { storage = new Map(), failStorageWrites = false } =
       subscribe(callback){ this.status = callback; return this; }, send: async () => 'ok' };
     channels.set(name, channel); return channel;
   }};
-  const context = vm.createContext({ document, window, navigator: { onLine: true }, location: { hash:'', pathname:'/', search:'' },
-    history: { replaceState(){} }, localStorage: { getItem: key => key === 'biz-identity' ? 'Furki' : storage.get(key) || null,
+  const context = vm.createContext({ document, window, navigator: { onLine: true, ...(worker ? {serviceWorker:worker} : {}) }, location: { hash:'', pathname:'/', search:'' },
+    history: { replaceState(){} }, localStorage: { getItem: key => key === 'biz-identity' ? identity : storage.get(key) || null,
       setItem: (key,value) => { if(failStorageWrites) throw new Error('quota'); storage.set(key,value); }, removeItem:key=>storage.delete(key) },
     supabase: { createClient: () => fakeSupabase }, console: { log(){}, error(){}, warn(){} },
     setTimeout: () => 0, clearTimeout(){}, setInterval(callback, ms){ const id = ++intervalId; intervals.set(id, {callback, ms}); return id; },
@@ -90,6 +93,21 @@ function message(i, date){
     sender: 'Hilalişko', content: 'Mesaj ' + i, read_at: null };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
+
+test('saved iPhone identity is synced to an existing push subscription at startup', async () => {
+  const registration={pushManager:{getSubscription:async()=>({toJSON:()=>({endpoint:'https://push.example/device',keys:{p256dh:'test-public',auth:'test-auth'}})})}};
+  const worker={register:async()=>registration,ready:Promise.resolve(registration),getRegistration:async()=>registration};
+  const a=app([],{worker,identity:'Hilalişko'});a.events.get('load')();await settle();
+  const saved=a.calls.find(call=>call.table==='push_subscriptions');
+  assert.equal(saved.record.owner_name,'Hilalişko');assert.equal(saved.record.endpoint,'https://push.example/device');
+  assert.equal(saved.options.onConflict,'endpoint');
+});
+test('startup does not request notification permission or create a new subscription', async () => {
+  const registration={pushManager:{getSubscription:async()=>null}};
+  const worker={register:async()=>registration,ready:Promise.resolve(registration),getRegistration:async()=>registration};
+  const a=app([],{worker,identity:'Hilalişko'});a.events.get('load')();await settle();
+  assert.ok(!a.calls.some(call=>call.table==='push_subscriptions'));
+});
 
 test('home does not load message history, memories or photos', async () => {
   const a = app([message(1)]); await settle();

@@ -5,16 +5,16 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.join(__dirname, '..');
 
-function api({ configured = true, failPush = false } = {}){
+function api({ configured = true, failPush = false, noPartner = false } = {}){
   const deliveries = [], removed = [];
   const subscriptions = [
     {endpoint:'https://push.example/a', p256dh:'a', auth:'a', owner_name:'Furki'},
-    {endpoint:'https://push.example/b', p256dh:'b', auth:'b', owner_name:'Hilalişko'}
+    {endpoint:'https://push.example/b', p256dh:'b', auth:'b', owner_name:noPartner ? null : 'Hilalişko'}
   ];
   const client = { from(){ return { select: async () => ({data: subscriptions}),
     delete(){ return {in: async (column, ids) => { removed.push(...ids); return {}; }}; } }; } };
   const context = vm.createContext({ module: {exports:{}}, URL, Map, Date, AbortSignal, fetch(){},
-    console: {error(){}, warn(){}}, process: {env: configured ? {SUPABASE_URL:'https://db.example', SUPABASE_ANON_KEY:'test', VAPID_PUBLIC_KEY:'test', VAPID_PRIVATE_KEY:'test'} : {}},
+    console: {error(){}, warn(){}, info(){}}, process: {env: configured ? {SUPABASE_URL:'https://db.example', SUPABASE_ANON_KEY:'test', VAPID_PUBLIC_KEY:'test', VAPID_PRIVATE_KEY:'test'} : {}},
     require(name){ return name === 'web-push' ? {setVapidDetails(){}, async sendNotification(sub, payload){
       deliveries.push({sub, payload: JSON.parse(payload)});
       if(failPush) throw {statusCode:410};
@@ -50,6 +50,11 @@ test('notification skips sender and links to chat', async () => {
   assert.equal(response.statusCode,200); assert.equal(response.body.sent,1);
   assert.equal(a.deliveries[0].sub.endpoint,'https://push.example/b');
   assert.equal(a.deliveries[0].payload.url,'/#chat');
+  assert.equal(response.body.recipientRegistered,true);
+});
+test('unassigned subscriptions do not falsely report that partner is registered',async()=>{
+  const response=await api({noPartner:true}).request();
+  assert.equal(response.statusCode,200);assert.equal(response.body.recipientRegistered,false);
 });
 test('expired subscriptions are cleaned and failed deliveries are not reported as success', async () => {
   const a = api({failPush:true}); const response = await a.request();
