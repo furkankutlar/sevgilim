@@ -96,3 +96,12 @@ test('no matching device does not mark a sale as notified',async()=>{
   const noDevice=createMonitor({store:r.store,now:()=>new Date('2026-11-11T13:00:00Z'),fetchProduct:async url=>({...productUrl(url),name:'Test',image:null,price:90,inStock:true}),notifier:{prepare:async()=>({count:0})}});
   await noDevice();assert.equal((await r.store.read()).state.products[0].lastAlertPrice,null);
 });
+test('missing first price can be repaired without notifications or weakening normal check interval',async()=>{
+  const r=rig();r.fail(true);await r.monitor();r.fail(false);r.time('2026-11-10T13:10:00Z');
+  const result=await r.monitor({onlyMissing:true,notify:false});assert.equal(result.checked,2);assert.equal(r.sent.length,0);
+  assert.equal((await r.store.read()).state.lastRunAt,'2026-11-10T13:00:00.000Z');assert.equal((await r.monitor()).skipped,true);
+});
+test('missing-price retries are limited to once every thirty minutes',async()=>{
+  const r=rig();r.fail(true);await r.monitor();r.time('2026-11-10T13:01:00Z');await r.monitor({onlyMissing:true,notify:false});
+  r.time('2026-11-10T13:02:00Z');assert.equal((await r.monitor({onlyMissing:true,notify:false})).skipped,true);
+});

@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const {emptyState}=require('../lib/price-store.cjs');
 function api(){
-  let state=emptyState(),checks=[];state.lastRunAt='2026-11-10T13:00:00Z';
+  let state=emptyState(),checks=[];state.lastRunAt='2026-11-10T13:00:00Z';state.products.forEach(item=>{item.price=100;item.referencePrice=100;});
   const store={read:async()=>({state:structuredClone(state)}),mutate:async change=>{const result=change(state);return result?.value;}};
   const modules={
     'node:crypto':require('node:crypto'),

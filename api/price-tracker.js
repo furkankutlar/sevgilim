@@ -20,6 +20,9 @@ module.exports=async(req,res)=>{
     if(req.method==='GET'){
       let {state}=await store.read();
       if(!state.lastRunAt){await monitor({notify:false});state=(await store.read()).state;}
+      else if(state.products.some(item=>item.enabled && item.price==null && (!item.lastMissingAttemptAt || Date.now()-Date.parse(item.lastMissingAttemptAt)>=1800000))){
+        await monitor({notify:false,onlyMissing:true});state=(await store.read()).state;
+      }
       return res.status(200).json({products:state.products,lastCompletedAt:state.lastCompletedAt||null,
         nextCheckAt:state.lastRunAt?new Date(Date.parse(state.lastRunAt)+INTERVAL).toISOString():null,
         schedule:'Her gün 16:00–17:00 arasında',events:state.events.slice(-10).map(({at,status,owner})=>({at,status,owner}))});
