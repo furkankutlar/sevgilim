@@ -49,6 +49,14 @@ test('store bootstraps once, retries etag collision without lost update',async()
   await store.mutate(state=>{state.products[0].target=250;});
   assert.equal((await store.read()).state.products[0].target,250);
 });
+test('real SDK conflict uses Error.name and is still retried by instanceof',async()=>{
+  const sdk=fakeBlob();const {BlobPreconditionFailedError}=require('@vercel/blob');
+  sdk.BlobPreconditionFailedError=BlobPreconditionFailedError;
+  const original=sdk.put;let injected=false;
+  sdk.put=async(path,text,options)=>{if(options.ifMatch && !injected){injected=true;throw new BlobPreconditionFailedError();}return original(path,text,options);};
+  const store=createStore(sdk);await store.read();await store.mutate(state=>{state.products[0].target=123;});
+  assert.equal((await store.read()).state.products[0].target,123);
+});
 test('first observations establish baseline without sending any notification',async()=>{
   const r=rig();await r.monitor();assert.equal(r.sent.length,0);
   const state=(await r.store.read()).state;assert.equal(state.products[0].price,100);assert.equal(state.products[0].history.length,1);
