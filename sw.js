@@ -1,13 +1,17 @@
-const SHELL_CACHE = 'biz-shell-2026-11-10-v1';
-const SHELL_PATHS = ['/', '/index.html', '/style.css', '/script.js', '/chat.js', '/manifest.json',
-  '/vendor/supabase.js', '/vendor/cropper.min.js', '/vendor/cropper.min.css'];
+const SHELL_CACHE = 'biz-shell-2026-11-10-v2';
+const SHELL_PATHS = ['/', '/index.html', '/style.css', '/script.js', '/chat.js', '/mobile.js', '/daily-question.js', '/manifest.json',
+  '/vendor/supabase.js', '/vendor/cropper.min.js', '/vendor/cropper.min.css',
+  '/icons/icon.svg', '/icons/apple-touch-icon.png', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(SHELL_CACHE).then(cache => cache.addAll(SHELL_PATHS)).then(() => self.skipWaiting()));
+  // Önbellek kotası dolu olsa da yeni çalışan çevrimiçi kullanıma geçebilsin.
+  event.waitUntil(Promise.resolve().then(() => caches.open(SHELL_CACHE)).then(cache => cache.addAll(SHELL_PATHS))
+    .catch(() => {}).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys
+  event.waitUntil(Promise.resolve().then(() => caches.keys()).then(keys => Promise.all(keys
     .filter(key => key.startsWith('biz-shell-') && key !== SHELL_CACHE).map(key => caches.delete(key))))
+    .catch(() => {})
     .then(() => self.clients.claim()));
 });
 
@@ -15,17 +19,21 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if(event.request.method !== 'GET' || url.origin !== self.location.origin || !SHELL_PATHS.includes(url.pathname)) return;
-  const network = fetch(event.request).then(async response => {
+  const network = fetch(event.request);
+  // Yaşam süresini olayın içinde uzat; önbellek işlemi yanıt zincirinden tamamen bağımsızdır.
+  event.waitUntil(network.then(response => {
     if(response.ok){
-      const cache = await caches.open(SHELL_CACHE);
-      await cache.put(event.request, response.clone());
+      const copy = response.clone();
+      // Yazma hatası başarılı ağ yanıtını değiştirmesin veya geciktirmesin.
+      return Promise.resolve().then(() => caches.open(SHELL_CACHE)).then(cache => cache.put(event.request, copy));
     }
-    return response;
-  });
+  }).catch(() => {}));
   event.respondWith(network.catch(async () => {
-    const cached = await caches.match(event.request);
-    if(cached) return cached;
-    if(event.request.mode === 'navigate') return (await caches.match('/index.html')) || Response.error();
+    try{
+      const cached = await caches.match(event.request);
+      if(cached) return cached;
+      if(event.request.mode === 'navigate') return (await caches.match('/index.html')) || Response.error();
+    }catch(error){}
     return Response.error();
   }));
 });

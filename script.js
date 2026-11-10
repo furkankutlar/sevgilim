@@ -25,6 +25,7 @@ function calcDiff(start, now){
 }
 
 function update(){
+  if(document.hidden) return;
   const now = new Date();
   const d = calcDiff(startDate, now);
   document.getElementById('years').textContent = d.years;
@@ -37,12 +38,13 @@ function update(){
 
 update();
 setInterval(update, 1000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) update(); });
 
 // ---------- Uçuşan kalp efekti ----------
 const heartsContainer = document.getElementById('hearts');
 const heartChars = ['💗','💕','♡'];
 function spawnHeart(){
-  if(document.hidden || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if(heartsContainer.hidden || document.hidden || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const el = document.createElement('div');
   el.className = 'heart';
   el.textContent = heartChars[Math.floor(Math.random()*heartChars.length)];
@@ -214,6 +216,20 @@ function timeAgo(dateStr){
 // ANILAR — LİSTELEME
 // ============================================================
 let currentMemories = [];
+const MEMORY_PAGE_SIZE = 20;
+const loadMoreMemoriesBtn = document.getElementById('loadMoreMemoriesBtn');
+const memoriesFeedback = document.getElementById('memoriesFeedback');
+let memoryLoadPromise = null;
+let memoryRefreshQueued = false;
+let hasMoreMemories = false;
+let memoriesFetchedAt = 0;
+
+function updateMemoryPagination({ failed = false } = {}){
+  if(!loadMoreMemoriesBtn) return;
+  loadMoreMemoriesBtn.hidden = !hasMoreMemories && !(failed && currentMemories.length === 0);
+  loadMoreMemoriesBtn.disabled = !!memoryLoadPromise;
+  loadMoreMemoriesBtn.textContent = failed && currentMemories.length === 0 ? 'Tekrar dene' : 'Daha fazla anı yükle';
+}
 
 function renderMemories(memories){
   if(!memories || memories.length === 0){
@@ -233,21 +249,59 @@ function renderMemories(memories){
   `).join('');
 }
 
-async function fetchMemories(){
-  const { data, error } = await supabaseClient
-    .from('memories')
-    .select('*')
-    .order('memory_date', { ascending: false });
-
-  if(error){
-    console.error('Anılar hatası:', error);
-    memoriesGrid.innerHTML = '<div class="memories-error">Anılar yüklenirken bir hata oluştu.</div>';
+async function fetchMemories({ append = false, force = false } = {}){
+  if(memoryLoadPromise){
+    if(!append && force) memoryRefreshQueued = true;
+    return memoryLoadPromise;
+  }
+  if(append && (!hasMoreMemories || !currentMemories.length)) return;
+  if(!append && !force && currentMemories.length && Date.now() - memoriesFetchedAt < 30000){
+    renderMemories(currentMemories);
     return;
   }
-
-  currentMemories = data || [];
-  renderMemories(currentMemories);
+  let failed = false;
+  memoryLoadPromise = (async () => {
+    let nextPage = append;
+    do{
+      memoryRefreshQueued = false;
+      failed = false;
+      try{
+        // Yenilemede daha önce açılmış sayfaların derinliğini koru.
+        const limit = nextPage ? MEMORY_PAGE_SIZE : Math.max(MEMORY_PAGE_SIZE, currentMemories.length);
+        let query = supabaseClient.from('memories')
+          .select('id,title,memory_date,description,image_url,original_image_url')
+          .order('memory_date', { ascending: false }).order('id', { ascending: false });
+        if(nextPage){
+          const cursor = currentMemories.at(-1);
+          query = query.or(`memory_date.lt.${cursor.memory_date},and(memory_date.eq.${cursor.memory_date},id.lt.${cursor.id})`);
+        }
+        const { data, error } = await query.limit(limit);
+        if(error) throw error;
+        const rows = data || [];
+        const merged = nextPage ? [...currentMemories, ...rows] : rows;
+        currentMemories = [...new Map(merged.map(memory => [memory.id, memory])).values()]
+          .sort((a, b) => a.memory_date === b.memory_date
+            ? String(b.id).localeCompare(String(a.id)) : b.memory_date.localeCompare(a.memory_date));
+        hasMoreMemories = rows.length === limit;
+        memoriesFetchedAt = Date.now();
+        if(memoriesFeedback) memoriesFeedback.textContent = '';
+        renderMemories(currentMemories);
+      }catch(error){
+        failed = true;
+        const message = currentMemories.length ? 'Yeni anılar yüklenemedi. Mevcut anıların burada; tekrar deneyebilirsin.' : 'Anılar yüklenemedi. Bağlantını kontrol edip tekrar deneyebilirsin.';
+        if(memoriesFeedback) memoriesFeedback.textContent = message;
+        if(!currentMemories.length) memoriesGrid.innerHTML = '<div class="memories-error">Anılar yüklenemedi.</div>';
+      }
+      nextPage = false;
+    }while(memoryRefreshQueued);
+  })();
+  updateMemoryPagination();
+  try{ await memoryLoadPromise; }
+  finally{ memoryLoadPromise = null; updateMemoryPagination({ failed }); }
 }
+
+if(loadMoreMemoriesBtn) loadMoreMemoriesBtn.addEventListener('click', () =>
+  void fetchMemories(currentMemories.length ? { append: true } : { force: true }));
 
 async function addMemory(memory){
   const { error } = await supabaseClient.from('memories').insert([memory]);
@@ -267,7 +321,7 @@ async function deleteMemory(id){
     console.error(error);
     return;
   }
-  fetchMemories();
+  fetchMemories({ force: true });
 }
 
 // ============================================================
@@ -551,7 +605,7 @@ saveBtn.addEventListener('click', async () => {
   }
 
   closeModal();
-  fetchMemories();
+  fetchMemories({ force: true });
 });
 
 // ============================================================
@@ -926,6 +980,7 @@ function switchTab(tabName){
   if(tabName === 'special') void fetchSpecialDays();
 
   window.scrollTo({ top: 0, behavior: 'instant' });
+  if(typeof CustomEvent === 'function') window.dispatchEvent(new CustomEvent('biz:tabchange', { detail: { tab: tabName } }));
 }
 
 tabButtons.forEach(btn => {
@@ -990,10 +1045,12 @@ function setIdentity(name){
   try{ localStorage.setItem('biz-identity', name); }catch(e){}
   chatIdentityLabel.textContent = `Sen: ${name}`;
   identityModalOverlay.classList.remove('open');
+  restorePendingDraft();
   renderMessages();
   syncChatActivity();
   updateSubscriptionIdentity();
   updateChatBadge();
+  if(typeof CustomEvent === 'function') window.dispatchEvent(new CustomEvent('biz:identitychange', { detail: { identity: name } }));
 }
 
 document.querySelectorAll('.identity-btn').forEach(btn => {

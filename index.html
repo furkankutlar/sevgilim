@@ -13,16 +13,16 @@
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Biz</title>
-<link rel="apple-touch-icon" href="https://gxsagwouvimjlzbovyay.supabase.co/storage/v1/object/public/memory-photos/resim1.jpg">
-<link rel="icon" type="image/png" href="https://gxsagwouvimjlzbovyay.supabase.co/storage/v1/object/public/memory-photos/resim1.jpg">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#F7C9DA">
+<meta name="theme-color" content="#fbf6f2">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Biz">
+<meta name="description" content="Anılarımız, hayallerimiz ve her gün birbirimize ayırdığımız küçük bir an.">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="vendor/cropper.min.css">
 <link rel="stylesheet" href="style.css">
 <script src="vendor/cropper.min.js"></script>
@@ -31,19 +31,18 @@
 <body>
   <div class="connection-status" id="connectionStatus" role="status" aria-live="polite" hidden></div>
 
-  <div class="bg-blobs">
-    <div class="blob b1"></div>
-    <div class="blob b2"></div>
-    <div class="blob b3"></div>
-    <div class="blob b4"></div>
-  </div>
-  <div class="hearts" id="hearts"></div>
+  <div class="hearts" id="hearts" aria-hidden="true" hidden></div>
 
   <div class="wrap">
+    <header class="brand-bar">
+      <span class="brand-wordmark" aria-label="Biz">biz<span aria-hidden="true">.</span></span>
+      <span class="brand-couple"><span class="couple-dot" aria-hidden="true"></span> Furki &amp; Hilalişko</span>
+    </header>
 
     <!-- ================= ANA SAYFA ================= -->
     <div class="tab-page active" data-page="home">
-      <div class="eyebrow">Aşkımızın Zamanı</div>
+      <section class="hero-card" aria-label="Birlikte geçirdiğimiz zaman">
+      <div class="eyebrow"><span aria-hidden="true">♡</span> Aşkımızın zamanı</div>
 
       <h1>Seninle geçen <em>her an</em><br>bir hediye</h1>
 
@@ -57,32 +56,36 @@
         <div class="unit gold"><div class="num" id="minutes">0</div><div class="label">Dakika</div></div>
       </div>
 
-      <div class="seconds-row">ve <span class="sec-num" id="seconds">0</span> saniye ✨</div>
-
-      <div class="divider"></div>
-
-      <p class="message">
-        "Zaman geçtikçe anladım ki, sana olan aşkım saatlerle, günlerle
-        değil; kalbimin her atışıyla ölçülüyor."
-      </p>
-
-      <section class="celebration-card" aria-label="2. ay kutlaması">
-        <div class="celebration-gif-wrap">
-          <img
-            src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbG45Z2F1dTQ0b3Y5Z3N2eXF5bG9sN2F6bXZrY2N4Y3R1aWZlYyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/vFKqnCdLPNOKc/giphy.gif"
-            alt="Kutlama yapan tatlı bir GIF"
-            loading="lazy">
-        </div>
-        <div class="celebration-copy">
-          <div class="celebration-badge">2. Ayımız Kutlu Olsun 💗</div>
-          <h2 class="celebration-title">Seninle her ay daha güzel.</h2>
-          <p class="celebration-text">Bu küçük köşeyi sadece bize ait bir kutlama alanı gibi düşündüm; biraz sevgi, biraz eğlence, biraz da GIF.</p>
-        </div>
+      <div class="seconds-row">ve <span class="sec-num" id="seconds">0</span> saniye, iyi ki sen.</div>
       </section>
 
-      <a href="https://open.spotify.com/intl-tr/track/0RVlgxQzm987QRszX2p875?si=f59362ef93da4055" target="_blank" class="custom-spotify-card">
+      <section class="daily-question-card" id="dailyQuestionCard" aria-labelledby="dailyQuestionHeading">
+        <div class="daily-card-top">
+          <span class="eyebrow">İkimize bir an</span>
+          <span class="daily-date" id="dailyQuestionDate"></span>
+        </div>
+        <h2 id="dailyQuestionHeading">Günün sorusu <span aria-hidden="true">↗</span></h2>
+        <p class="daily-note" id="dailyQuestionHint">Her gün ikimize aynı soru. Cevabın ortak sohbetimize gider.</p>
+        <span class="question-category" id="dailyQuestionCategory" hidden></span>
+        <p class="question-text" id="dailyQuestionText">Bugünün sorusu hazırlanıyor…</p>
+        <label class="sr-only" for="dailyQuestionAnswer">Günün sorusuna cevabın</label>
+        <textarea id="dailyQuestionAnswer" rows="3" maxlength="350" placeholder="İçinden geçeni yaz…" aria-describedby="dailyQuestionHint dailyQuestionFeedback"></textarea>
+        <div class="daily-card-actions">
+          <a id="dailyQuestionSource" href="#" target="_blank" rel="noopener noreferrer" hidden>Soru kaynağı ↗</a>
+          <button class="btn-primary" id="dailyQuestionSend" type="button">Cevabımı paylaş <span aria-hidden="true">↗</span></button>
+        </div>
+        <p class="inline-feedback" id="dailyQuestionFeedback" role="status" aria-live="polite"></p>
+        <button class="btn-secondary" id="dailyQuestionRetry" type="button" hidden>Tekrar dene</button>
+      </section>
+
+      <section class="together-note" aria-label="Bize dair">
+        <span class="together-heart" aria-hidden="true">♡</span>
+        <div><h2>Biriktirdiğimiz her şey, burada.</h2><p>“Zaman geçtikçe anladım ki, sana olan aşkım saatlerle, günlerle değil; kalbimin her atışıyla ölçülüyor.”</p></div>
+      </section>
+
+      <a href="https://open.spotify.com/intl-tr/track/0RVlgxQzm987QRszX2p875?si=f59362ef93da4055" target="_blank" rel="noopener noreferrer" class="custom-spotify-card">
         <div class="spotify-album-art">
-          <img src="https://i.scdn.co/image/ab67616d0000b273c05cc8f9ff54fbfb6f802805" alt="Şarkı Kapağı">
+          <img src="https://i.scdn.co/image/ab67616d0000b273c05cc8f9ff54fbfb6f802805" alt="Yalın — Olur Ya albüm kapağı" width="64" height="64" loading="lazy" decoding="async">
           <div class="spotify-center-hole"></div>
         </div>
         <div class="spotify-info">
@@ -97,19 +100,21 @@
     <div class="tab-page" data-page="memories">
       <section class="memories-section">
         <div class="memories-header">
-          <h2 class="section-title">Anılar<em>ımız</em></h2>
+          <h2 class="section-title">Anılar<em>ımız.</em></h2>
           <p class="section-subtitle">Birlikte biriktirdiğimiz küçük büyük her şey</p>
         </div>
         <div class="memories-grid" id="memoriesGrid">
           <div class="memories-loading">Anılar yükleniyor...</div>
         </div>
+        <p class="inline-feedback" id="memoriesFeedback" role="status" aria-live="polite"></p>
+        <button class="btn-secondary load-more-btn" id="loadMoreMemoriesBtn" type="button" hidden>Daha fazla anı göster</button>
       </section>
     </div>
 
     <!-- ================= HAYALLER ================= -->
     <div class="tab-page" data-page="bucket">
       <section class="bucket-section">
-        <h2 class="section-title">Yapılacaklar<em> Listemiz</em></h2>
+        <h2 class="section-title">Birlikte <em>yapacağız.</em></h2>
         <p class="section-subtitle">Birlikte gerçekleştireceğimiz tüm hayallerimiz</p>
 
         <div class="bucket-input-wrapper">
@@ -126,7 +131,7 @@
     <!-- ================= ÖZEL GÜNLER ================= -->
     <div class="tab-page" data-page="special">
       <section class="special-days-section">
-        <h2 class="section-title">Özel <em>Günlerimiz</em></h2>
+        <h2 class="section-title">Beklediğimiz <em>günler.</em></h2>
         <p class="section-subtitle">Sabırsızlıkla beklediğimiz günler</p>
 
         <div class="special-input-wrapper">
@@ -181,7 +186,7 @@
   </div>
 
   <!-- Alt sekme çubuğu -->
-  <nav class="tab-bar">
+  <nav class="tab-bar" aria-label="Ana gezinme">
     <button class="tab-btn active" data-tab="home" aria-label="Ana Sayfa">🏠<span>Ana Sayfa</span></button>
     <button class="tab-btn" data-tab="memories" aria-label="Anılar">📸<span>Anılar</span></button>
     <button class="tab-btn" data-tab="bucket" aria-label="Dateler">✨<span>Dateler</span></button>
@@ -193,7 +198,7 @@
   <!-- Sohbet mesaj giriş kutusu — animasyon çakışmasın diye sekmenin dışında, bağımsız -->
   <div class="typing-indicator" id="typingIndicator" style="display:none;"></div>
   <div class="chat-input-row" id="chatInputRow" style="display:none;">
-    <input type="text" id="chatInput" placeholder="Bir mesaj yaz..." maxlength="500">
+    <input type="text" id="chatInput" aria-label="Mesajın" placeholder="Bir mesaj yaz…" maxlength="500" enterkeyhint="send" autocomplete="off">
     <button id="chatSendBtn" aria-label="Gönder">➤</button>
   </div>
 
@@ -259,5 +264,7 @@
 
   <script src="script.js"></script>
   <script src="chat.js"></script>
+  <script src="daily-question.js"></script>
+  <script src="mobile.js"></script>
 </body>
 </html>

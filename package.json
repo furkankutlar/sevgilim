@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "test": "node --test tests/*.test.cjs",
-    "check": "node --check script.js && node --check chat.js && node --check sw.js && node --check api/send-notification.js"
+    "check": "node --check script.js && node --check chat.js && node --check mobile.js && node --check daily-question.js && node --check sw.js && node --check api/send-notification.js && node --check api/daily-question.js && node --check lib/daily-question.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.119.0",

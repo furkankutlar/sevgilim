@@ -61,14 +61,16 @@ test('burst limiter returns 429 after 20 requests per instance', async () => {
   assert.equal(response.headers['Retry-After'],'60');
 });
 
-function worker(clients = []){
+function worker(clients = [], options = {}){
   const handlers = new Map(), shown = [], opened = [];
+  let skipped = false, claimed = false;
   const self = { location:{origin:'https://furhi.vercel.app'}, addEventListener:(name,callback)=>handlers.set(name,callback),
-    clients:{matchAll:async()=>clients,openWindow:async url=>opened.push(url)},
+    skipWaiting:async()=>{skipped=true;},
+    clients:{matchAll:async()=>clients,openWindow:async url=>opened.push(url),claim:async()=>{claimed=true;}},
     registration:{showNotification:async(title,options)=>shown.push({title,options})} };
-  vm.runInNewContext(fs.readFileSync(path.join(root,'sw.js'),'utf8'),{self,URL,Response});
+  vm.runInNewContext(fs.readFileSync(path.join(root,'sw.js'),'utf8'),{self,URL,Response,...options});
   const invoke = async (name,values) => { let pending; handlers.get(name)({...values,waitUntil:p=>{pending=p;}}); await pending; };
-  return {handlers,shown,opened,invoke};
+  return {handlers,shown,opened,invoke,skipped:()=>skipped,claimed:()=>claimed};
 }
 test('hidden chat tab does not suppress push notification', async () => {
   const w = worker([{url:'https://furhi.vercel.app/#chat',visibilityState:'hidden',focused:false}]);
@@ -96,4 +98,24 @@ test('service worker does not intercept private data or API requests', () => {
     w.handlers.get('fetch')({request:{method:'GET',url},respondWith(){intercepted=true;}});
   }
   assert.equal(intercepted,false);
+});
+
+for(const failAt of ['open','put']){
+  test('successful network response survives cache '+failAt+' failure',async()=>{
+    const caches={open:async()=>{
+      if(failAt==='open')throw new Error('quota');
+      return {put:async()=>{throw new Error('quota');}};
+    },match:async()=>new Response('stale')};
+    const w=worker([],{caches,fetch:async()=>new Response('fresh',{status:200})});
+    let response;const work=[];
+    w.handlers.get('fetch')({request:{method:'GET',url:'https://furhi.vercel.app/script.js'},
+      respondWith:pending=>{response=pending;},waitUntil:pending=>work.push(pending)});
+    const result=await response;assert.equal(result.status,200);assert.equal(await result.text(),'fresh');
+    await Promise.all(work);
+  });
+}
+test('cache unavailable does not block worker install or activation',async()=>{
+  const caches={open:async()=>{throw new Error('quota');},keys:async()=>{throw new Error('storage unavailable');}};
+  const w=worker([],{caches});await w.invoke('install',{});await w.invoke('activate',{});
+  assert.equal(w.skipped(),true);assert.equal(w.claimed(),true);
 });

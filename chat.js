@@ -15,6 +15,9 @@ let chatRefreshPromise = null;
 let chatRefreshAgain = false;
 let loadingOlder = false;
 let sendingMessage = false;
+const pendingMessages = new Map();
+const loadedPendingSenders = new Set();
+const MAX_PENDING_MESSAGES = 50;
 let realtimeConnected = false;
 let renderedMessageIds = new Set();
 let typingHideTimeout = null;
@@ -146,27 +149,108 @@ async function loadOlderMessages(){
   finally{ loadingOlder = false; loadOlderBtn.disabled = false; }
 }
 
-async function sendMessage(){
-  if(sendingMessage) return;
-  const content = chatInput.value.trim();
-  if(!content || content.length > 500) return;
-  if(!myIdentity){ identityModalOverlay.classList.add('open'); return; }
-  if(!navigator.onLine){ chatFeedback.textContent = 'Çevrimdışısın. Mesajın kutuda duruyor; bağlanınca gönderebilirsin.'; return; }
+function validPendingMessage(saved, sender){
+  return saved?.sender === sender && typeof saved.content === 'string' && saved.content.length > 0 && saved.content.length <= 500 &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(saved.id);
+}
+
+function savePendingMessages(sender){
+  const records = [...pendingMessages.values()].filter(message => message.sender === sender);
+  try{
+    if(records.length) localStorage.setItem('biz-pending-messages:' + sender, JSON.stringify(records));
+    else localStorage.removeItem('biz-pending-messages:' + sender);
+    localStorage.removeItem('biz-pending-message:' + sender);
+  }catch(error){ /* Depolama kullanılamasa da bu oturumdaki kimlikler bellekte korunur. */ }
+}
+
+function readPendingMessages(sender){
+  if(!loadedPendingSenders.has(sender)){
+    loadedPendingSenders.add(sender);
+    try{
+      const records = JSON.parse(localStorage.getItem('biz-pending-messages:' + sender) || '[]');
+      if(Array.isArray(records)) for(const saved of records){
+        if(validPendingMessage(saved, sender)) pendingMessages.set(saved.id, saved);
+      }
+      // Önceki sürümün tek bekleyen kaydını kimliğini değiştirmeden taşı.
+      const legacy = JSON.parse(localStorage.getItem('biz-pending-message:' + sender) || 'null');
+      if(validPendingMessage(legacy, sender)){
+        pendingMessages.set(legacy.id, legacy);
+        savePendingMessages(sender);
+      }
+    }catch(error){}
+  }
+  return [...pendingMessages.values()].filter(message => message.sender === sender);
+}
+
+function readPendingMessage(sender, content){
+  return readPendingMessages(sender).find(message => content === undefined || message.content === content) || null;
+}
+
+function createMessageId(){
+  if(typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64;
+  bytes[8] = (bytes[8] & 63) | 128;
+  const hex = [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+}
+
+function restorePendingDraft(){
+  if(!myIdentity || chatInput.value) return;
+  const saved = readPendingMessage(myIdentity);
+  if(saved) chatInput.value = saved.content;
+}
+
+// Günün sorusu da aynı güvenilir gönderim yolunu kullanır.
+async function sendChatContent(value){
+  if(sendingMessage) return false;
+  const content = String(value || '').trim();
+  if(!content || content.length > 500) return false;
+  if(!myIdentity){ identityModalOverlay.classList.add('open'); return false; }
+  if(!navigator.onLine){ chatFeedback.textContent = 'Çevrimdışısın. Mesajın kutuda duruyor; bağlanınca gönderebilirsin.'; return false; }
   sendingMessage = true;
   chatSendBtn.disabled = true;
   const sender = myIdentity;
-  const submittedValue = chatInput.value;
   try{
-    const { error } = await supabaseClient.from('messages').insert([{ sender, content }]);
-    if(error) throw error;
-    // Gönderim sürerken yazılan bir sonraki mesajı silme.
-    if(chatInput.value === submittedValue) chatInput.value = '';
+    const saved = readPendingMessage(sender, content);
+    if(!saved && readPendingMessages(sender).length >= MAX_PENDING_MESSAGES){
+      chatFeedback.textContent = 'Gönderimi doğrulanmamış çok fazla mesaj var. Önce bekleyen mesajlarından birini tekrar dene.';
+      return false;
+    }
+    const outgoing = saved || { id: createMessageId(), sender, content };
+    pendingMessages.set(outgoing.id, outgoing);
+    // Ağ isteğinden önce sakla: sunucu kaydetse fakat yanıt kaybolsa da aynı kimlikle tekrar edilir.
+    savePendingMessages(sender);
+    const { error } = await supabaseClient.from('messages').insert([outgoing]);
+    let reconciled = false;
+    if(error){
+      if(error.code !== '23505') throw error;
+      const { data: existing, error: lookupError } = await supabaseClient.from('messages')
+        .select('id,sender,content,created_at,read_at').eq('id', outgoing.id).maybeSingle();
+      if(lookupError || !existing || existing.sender !== sender || existing.content !== content) throw error;
+      messageCache.set(existing.id, existing);
+      reconciled = true;
+    }
+    pendingMessages.delete(outgoing.id);
+    savePendingMessages(sender);
     chatFeedback.textContent = '';
-    void sendNotification(`💬 ${sender}`, content, sender, 'chat');
+    // Yinelenen kayıt uzlaştırılırken yeniden bildirim gönderme.
+    if(!reconciled) void sendNotification(`💬 ${sender}`, content, sender, 'chat');
     await refreshChat();
     chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-  }catch(error){ chatFeedback.textContent = 'Mesaj gönderilemedi. Yazdığın mesaj duruyor; tekrar deneyebilirsin.'; }
+    return true;
+  }catch(error){
+    chatFeedback.textContent = 'Mesaj gönderilemedi veya yanıt alınamadı. Mesajın duruyor; tekrar deneyebilirsin.';
+    return false;
+  }
   finally{ sendingMessage = false; chatSendBtn.disabled = false; }
+}
+
+async function sendMessage(){
+  const submittedValue = chatInput.value;
+  const sent = await sendChatContent(submittedValue);
+  if(sent && chatInput.value === submittedValue) chatInput.value = '';
+  return sent;
 }
 
 function hideTypingIndicator(){
@@ -244,4 +328,5 @@ function restoreTab(){
 }
 window.addEventListener('hashchange', restoreTab);
 void updateChatBadge();
+restorePendingDraft();
 restoreTab();

@@ -1,0 +1,337 @@
+{
+  "version": 1,
+  "source": {
+    "name": "Blabber",
+    "author": "Benjamin Soyka",
+    "url": "https://github.com/bsoyka/blabber",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://github.com/bsoyka/blabber/blob/a26100b47857d73072359fb96eccf840c81a1cf6/LICENSE",
+    "commit": "a26100b47857d73072359fb96eccf840c81a1cf6",
+    "rawUrls": [
+      "https://raw.githubusercontent.com/bsoyka/blabber/a26100b47857d73072359fb96eccf840c81a1cf6/blabber/data/open.txt",
+      "https://raw.githubusercontent.com/bsoyka/blabber/a26100b47857d73072359fb96eccf840c81a1cf6/blabber/data/rather.txt",
+      "https://raw.githubusercontent.com/bsoyka/blabber/a26100b47857d73072359fb96eccf840c81a1cf6/blabber/data/mult.txt",
+      "https://raw.githubusercontent.com/bsoyka/blabber/a26100b47857d73072359fb96eccf840c81a1cf6/blabber/data/yesno.txt"
+    ]
+  },
+  "questions": [
+    {
+      "id": "laugh-sound",
+      "original": "How would you transliterate the sound of your laugh in real life?",
+      "text": "Kahkahanın sesini yazıyla anlatman gerekse nasıl yazardın?",
+      "category": "Eğlence"
+    },
+    {
+      "id": "three-wishes",
+      "original": "If a genie came up to you and told you that you had three wishes, what wishes would you make and why?",
+      "text": "Üç dilek hakkın olsa neler dilerdin, neden?",
+      "category": "Hayaller"
+    },
+    {
+      "id": "favorite-recipe",
+      "original": "If you cook or bake, what is your favorite thing to make?",
+      "text": "Mutfakta yapmayı en sevdiğin yemek ya da tatlı ne?",
+      "category": "Günlük hayat"
+    },
+    {
+      "id": "be-an-animal",
+      "original": "If you could be any animal, which one would you be?",
+      "text": "Bir hayvan olabilsen hangisi olmak isterdin?",
+      "category": "Hayal gücü"
+    },
+    {
+      "id": "dream-job",
+      "original": "If you could choose a job right now to have for the rest of your life, what would you choose?",
+      "text": "Ömür boyu yapacağın işi bugün seçebilseydin hangi işi seçerdin?",
+      "category": "Hayaller"
+    },
+    {
+      "id": "dream-pet",
+      "original": "If you could have any pet right now, what kind of pet would you get?",
+      "text": "Şu an bir evcil hayvan edinebilsen hangi hayvanı seçerdin?",
+      "category": "Tercihler"
+    },
+    {
+      "id": "superpower",
+      "original": "If you could have any superpower, what would it be?",
+      "text": "Bir süper gücün olabilseydi hangisini isterdin?",
+      "category": "Hayal gücü"
+    },
+    {
+      "id": "one-nickname",
+      "original": "If you could only be called one nickname for the rest of your life, what would it be and why?",
+      "text": "Hayatın boyunca tek bir lakapla anılacak olsan hangi lakabı seçerdin, neden?",
+      "category": "Eğlence"
+    },
+    {
+      "id": "star-in-a-film",
+      "original": "If you could star in any show/movie, what would it be?",
+      "text": "Bir filmde ya da dizide başrol olabilsen hangisini seçerdin?",
+      "category": "Hayal gücü"
+    },
+    {
+      "id": "teleport",
+      "original": "If you could teleport once to anywhere, where would you go?",
+      "text": "Bir kez istediğin yere ışınlanabilsen nereye giderdin?",
+      "category": "Hayaller"
+    },
+    {
+      "id": "collection",
+      "original": "If you have a collection, what do you collect?",
+      "text": "Bir koleksiyonun var mı? Varsa neler biriktiriyorsun?",
+      "category": "Seni tanımak"
+    },
+    {
+      "id": "board-game",
+      "original": "If you play board games, which one is your favorite?",
+      "text": "Masa oyunları oynuyorsan en sevdiğin hangisi?",
+      "category": "Keyif"
+    },
+    {
+      "id": "unexpected-money",
+      "original": "If you suddenly got $5,000,000, what would you use your money for first?",
+      "text": "Bir anda 5 milyon doların olsa ilk ne yapardın?",
+      "category": "Hayaller"
+    },
+    {
+      "id": "yearbook-quote",
+      "original": "It's yearbook time! What quote do you want below your picture?",
+      "text": "Bir yıllıkta fotoğrafının altında hangi sözün yazmasını isterdin?",
+      "category": "Seni tanımak"
+    },
+    {
+      "id": "three-films",
+      "original": "What are your top three all-time favorite movies?",
+      "text": "Tüm zamanların en sevdiğin üç filmi hangileri?",
+      "category": "Keyif"
+    },
+    {
+      "id": "your-color",
+      "original": "What color do you find best describes yourself?",
+      "text": "Sence seni en iyi hangi renk anlatıyor?",
+      "category": "Seni tanımak"
+    },
+    {
+      "id": "two-week-trip",
+      "original": "What country would you visit if you could for two weeks?",
+      "text": "İki haftalık bir seyahate çıkabilsen hangi ülkeye giderdin?",
+      "category": "Hayaller"
+    },
+    {
+      "id": "rainy-day",
+      "original": "What do you like to do on a rainy day?",
+      "text": "Yağmurlu bir günde en çok ne yapmayı seversin?",
+      "category": "Günlük hayat"
+    },
+    {
+      "id": "weekend",
+      "original": "What do you normally do on weekends?",
+      "text": "Hafta sonlarını genellikle nasıl geçirirsin?",
+      "category": "Günlük hayat"
+    },
+    {
+      "id": "hogwarts-house",
+      "original": "What Hogwarts house are you in?",
+      "text": "Harry Potter dünyasında olsan hangi Hogwarts binasında olmak isterdin?",
+      "category": "Eğlence"
+    },
+    {
+      "id": "book-recommendation",
+      "original": "What is a book that you'd recommend to read?",
+      "text": "Okumamı önereceğin bir kitap hangisi olurdu?",
+      "category": "Keyif"
+    },
+    {
+      "id": "little-annoyances",
+      "original": "What is your biggest pet peeve?",
+      "text": "Günlük hayatta seni en çok rahatsız eden küçük şey ne?",
+      "category": "Seni tanımak"
+    },
+    {
+      "id": "earliest-memory",
+      "original": "What is your earliest memory and how old were you?",
+      "text": "Hatırladığın en eski anın ne? O sırada kaç yaşındaydın?",
+      "category": "Anılar"
+    },
+    {
+      "id": "languages",
+      "original": "What languages do you speak?",
+      "text": "Hangi dilleri konuşabiliyorsun?",
+      "category": "Seni tanımak"
+    },
+    {
+      "id": "recurring-dreams",
+      "original": "What recurring dreams do you have?",
+      "text": "Tekrar tekrar gördüğün bir rüya var mı?",
+      "category": "Seni tanımak"
+    },
+    {
+      "id": "daily-routine",
+      "original": "What routine do you stick to daily?",
+      "text": "Her gün yapmaya özen gösterdiğin bir alışkanlığın ne?",
+      "category": "Günlük hayat"
+    },
+    {
+      "id": "sports",
+      "original": "What sports do you play?",
+      "text": "Yapmaktan hoşlandığın sporlar hangileri?",
+      "category": "Keyif"
+    },
+    {
+      "id": "childhood-show",
+      "original": "What was your favorite TV show when you were younger?",
+      "text": "Küçükken en sevdiğin televizyon programı ya da dizi hangisiydi?",
+      "category": "Anılar"
+    },
+    {
+      "id": "bucket-list",
+      "original": "What's on your bucket list?",
+      "text": "Hayatta mutlaka yapmak istediğin şeylerden biri ne?",
+      "category": "Hayaller"
+    },
+    {
+      "id": "best-class",
+      "original": "What's the best class you've ever taken?",
+      "text": "Şimdiye kadar katıldığın en güzel ders ya da kurs hangisiydi?",
+      "category": "Anılar"
+    },
+    {
+      "id": "worst-joke",
+      "original": "What's the worst joke you've ever heard?",
+      "text": "Duyduğun en kötü şaka neydi?",
+      "category": "Eğlence"
+    },
+    {
+      "id": "ice-cream",
+      "original": "What's your favorite ice cream flavor?",
+      "text": "En sevdiğin dondurma çeşidi hangisi?",
+      "category": "Keyif"
+    },
+    {
+      "id": "favorite-quote",
+      "original": "What's your favorite quote?",
+      "text": "En sevdiğin söz hangisi?",
+      "category": "Seni tanımak"
+    },
+    {
+      "id": "video-game",
+      "original": "What's your favorite video game?",
+      "text": "En sevdiğin video oyunu hangisi?",
+      "category": "Keyif"
+    },
+    {
+      "id": "hidden-talent",
+      "original": "What's your hidden talent?",
+      "text": "Pek kimsenin bilmediği bir yeteneğin var mı?",
+      "category": "Seni tanımak"
+    },
+    {
+      "id": "dream-college",
+      "original": "Where would you want to go to college and why, assuming acceptance and cost aren't issues?",
+      "text": "Kabul edilme ve ücret sorun olmasaydı hangi üniversitede okumak isterdin, neden?",
+      "category": "Hayaller"
+    },
+    {
+      "id": "role-model",
+      "original": "Who do you look up to and why?",
+      "text": "Kendine örnek aldığın biri kim, neden?",
+      "category": "Seni tanımak"
+    },
+    {
+      "id": "favorite-musician",
+      "original": "Who is your favorite singer/band and why?",
+      "text": "En sevdiğin şarkıcı ya da müzik grubu hangisi, neden?",
+      "category": "Keyif"
+    },
+    {
+      "id": "one-store",
+      "original": "You can only shop at one store for the rest of your life. Which one is it?",
+      "text": "Hayatın boyunca yalnızca tek bir mağazadan alışveriş yapabilecek olsan hangisini seçerdin?",
+      "category": "Eğlence"
+    },
+    {
+      "id": "park-or-library",
+      "original": "Would you rather be locked in an amusement park or a library?",
+      "text": "Bir yerde kapalı kalacak olsan lunaparkı mı, kütüphaneyi mi seçerdin?",
+      "category": "Tercihler"
+    },
+    {
+      "id": "fire-or-water",
+      "original": "Would you rather control fire or water?",
+      "text": "Ateşi mi yoksa suyu mu kontrol edebilmek isterdin?",
+      "category": "Hayal gücü"
+    },
+    {
+      "id": "space-or-ocean",
+      "original": "Would you rather explore space or the depths of the ocean?",
+      "text": "Uzayı mı, okyanusun derinliklerini mi keşfetmek isterdin?",
+      "category": "Hayaller"
+    },
+    {
+      "id": "spend-or-save",
+      "original": "Are you a spender or a saver?",
+      "text": "Harcamayı mı yoksa biriktirmeyi mi daha çok seversin?",
+      "category": "Tercihler"
+    },
+    {
+      "id": "early-or-late",
+      "original": "Are you an early bird or a night owl?",
+      "text": "Sabah insanı mısın, gece kuşu mu?",
+      "category": "Tercihler"
+    },
+    {
+      "id": "introvert-or-extrovert",
+      "original": "Are you an introvert or an extrovert?",
+      "text": "Kendini daha çok içe dönük mü, dışa dönük mü görüyorsun?",
+      "category": "Seni tanımak"
+    },
+    {
+      "id": "coffee-or-tea",
+      "original": "Do you enjoy coffee or tea more?",
+      "text": "Kahveyi mi, çayı mı daha çok seversin?",
+      "category": "Tercihler"
+    },
+    {
+      "id": "sea-or-mountains",
+      "original": "Do you enjoy the scenery of oceans or mountains more?",
+      "text": "Deniz manzarasını mı, dağ manzarasını mı daha çok seversin?",
+      "category": "Tercihler"
+    },
+    {
+      "id": "aliens",
+      "original": "Are aliens real?",
+      "text": "Sence dünya dışında yaşam var mı?",
+      "category": "Hayal gücü"
+    },
+    {
+      "id": "pineapple-pizza",
+      "original": "Do pineapples belong on pizza?",
+      "text": "Sence pizzaya ananas yakışır mı?",
+      "category": "Eğlence"
+    },
+    {
+      "id": "podcasts",
+      "original": "Do you enjoy podcasts?",
+      "text": "Podcast dinlemeyi sever misin?",
+      "category": "Keyif"
+    },
+    {
+      "id": "roller-coasters",
+      "original": "Do you enjoy roller coasters?",
+      "text": "Lunaparktaki hız trenlerine binmeyi sever misin?",
+      "category": "Eğlence"
+    },
+    {
+      "id": "radio-or-tv",
+      "original": "Have you ever been on the radio or TV?",
+      "text": "Hiç radyoya ya da televizyona çıktın mı?",
+      "category": "Anılar"
+    },
+    {
+      "id": "award",
+      "original": "Have you ever won an award?",
+      "text": "Hiç bir ödül kazandın mı?",
+      "category": "Anılar"
+    }
+  ]
+}
