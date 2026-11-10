@@ -1,6 +1,6 @@
 const { timingSafeEqual }=require('node:crypto');
 const {createStore}=require('../lib/price-store.cjs');
-const {productUrl,fetchProduct}=require('../lib/price-source.cjs');
+const {productUrl,fetchProduct,READER_VERSION}=require('../lib/price-source.cjs');
 const {createMonitor,INTERVAL}=require('../lib/price-monitor.cjs');
 const {createNotifier}=require('../lib/price-notifications.cjs');
 const store=createStore();
@@ -20,7 +20,7 @@ module.exports=async(req,res)=>{
     if(req.method==='GET'){
       let {state}=await store.read();
       if(!state.lastRunAt){await monitor({notify:false});state=(await store.read()).state;}
-      else if(state.products.some(item=>item.enabled && item.price==null && (!item.lastMissingAttemptAt || Date.now()-Date.parse(item.lastMissingAttemptAt)>=1800000))){
+      else if(state.products.some(item=>item.enabled && item.price==null && (item.lastMissingReaderVersion!==READER_VERSION || !item.lastMissingAttemptAt || Date.now()-Date.parse(item.lastMissingAttemptAt)>=1800000))){
         await monitor({notify:false,onlyMissing:true});state=(await store.read()).state;
       }
       return res.status(200).json({products:state.products,lastCompletedAt:state.lastCompletedAt||null,

@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const {productUrl,parseProduct,fetchProduct,SEEDS}=require('../lib/price-source.cjs');
+const {productUrl,parseProduct,parseWatsonsData,fetchProduct,SEEDS}=require('../lib/price-source.cjs');
 const {createStore}=require('../lib/price-store.cjs');
 const {createMonitor,qualifies}=require('../lib/price-monitor.cjs');
 function html(price=362,extra={}){return '<script type="application/ld+json">'+JSON.stringify({'@type':'Product',name:'Test ürünü',sku:'10015186',image:'https://img.example/product.jpg',offers:{'@type':'Offer',price,priceCurrency:'TRY',availability:'https://schema.org/InStock'},...extra})+'</script>';}
@@ -56,6 +56,20 @@ test('real SDK conflict uses Error.name and is still retried by instanceof',asyn
   sdk.put=async(path,text,options)=>{if(options.ifMatch && !injected){injected=true;throw new BlobPreconditionFailedError();}return original(path,text,options);};
   const store=createStore(sdk);await store.read();await store.mutate(state=>{state.products[0].target=123;});
   assert.equal((await store.read()).state.products[0].target,123);
+});
+test('conditional writes use storage metadata etag rather than download representation etag',async()=>{
+  const sdk=fakeBlob(),get=sdk.get;sdk.BlobNotFoundError=require('@vercel/blob').BlobNotFoundError;
+  sdk.head=async()=>{const value=await get();if(!value)throw new sdk.BlobNotFoundError();return{etag:value.blob.etag};};
+  sdk.get=async()=>{const value=await get();if(value)value.blob.etag='W/"download-representation"';return value;};
+  const store=createStore(sdk);await store.mutate(state=>{state.products[0].target=200;});assert.equal((await store.read()).state.products[0].target,200);
+});
+test('anonymous Watsons storefront API validates product code, currency and stock',async()=>{
+  const target=productUrl(SEEDS[1].url),data={code:'1300649',name:'Urban Care',price:{currencyIso:'TRY',value:279},stock:{stockLevelStatus:'inStock'},images:[{url:'/medias/photo.jpg'}]};
+  const result=parseWatsonsData(data,target);assert.equal(result.price,279);assert.equal(result.image,'https://media.watsons.com.tr/medias/photo.jpg');
+  assert.throws(()=>parseWatsonsData({...data,code:'other'},target));
+  assert.throws(()=>parseWatsonsData({...data,price:{currencyIso:'EUR',value:10}},target));
+  let called;await fetchProduct(SEEDS[1].url,async url=>{called=url;return new Response(JSON.stringify(data));});
+  assert.ok(called.startsWith('https://api.watsons.com.tr/api/v2/wtctr-spa/products/1300649?'));
 });
 test('first observations establish baseline without sending any notification',async()=>{
   const r=rig();await r.monitor();assert.equal(r.sent.length,0);

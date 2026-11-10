@@ -57,8 +57,10 @@ Ana sayfadaki İndirim defterimiz kartı `/\#prices` bölümünü açar. İlk ik
 Pantene 10015186 ve Watsons Urban Care 1300649'dur; yeni bağlantılar da eklenebilir
 (en fazla 10 ürün). Ürünler kişi bazında duraklatılabilir ve hedef fiyat verilebilir.
 
-Fiyatlar yalnızca izin verilen iki mağazanın eşleşen ürün JSON-LD Offer verisinden,
-TL olarak ve doğrulanmış stok durumuyla okunur. İlgisiz ürün fiyatı, CAPTCHA/hata
+Fiyatlar Gratis'in eşleşen ürün JSON-LD Offer verisinden ve Watsons mağazasının
+kendi anonim ürün API'sinden TL olarak ve doğrulanmış stok durumuyla okunur. Watsons
+web sayfası sunucuya 403 verdiği için mağaza uygulamasının kullandığı açık ürün servisi
+seçilmiştir; üye oturumu, kart veya kişisel kupon kullanılmaz. İlgisiz ürün fiyatı, CAPTCHA/hata
 sayfası, başka sunucuya yönlendirme ve belirsiz fiyatlar reddedilir. Başarısız
 kontrol önceki fiyatı ve son başarılı kontrol zamanını değiştirmez.
 
@@ -66,7 +68,7 @@ kontrol önceki fiyatı ve son başarılı kontrol zamanını değiştirmez.
 kontrolünü `/api/price-tracker?job=daily` üzerinden çalıştırır. `CRON_SECRET` yalnızca
 sunucudadır. Private Vercel Blob deposu projeye bağlanmıştır; SDK otomatik sağlanan
 `BLOB_READ_WRITE_TOKEN` ile kalıcı state kullanır. Yazmalar ETag koşuluyla yapılır;
-10 dakikalık lease aynı kontrolün paralel çalışmasını önler. Elle kontroller dahil
+4 dakikalık lease aynı kontrolün paralel çalışmasını önler. Elle kontroller dahil
 kontroller arasında en az 6 saat vardır. Uygulamanın açık olması gerekmez.
 
 İlk fiyat bildirimsiz başlangıçtır. Hedef yoksa takipte gözlenen en yüksek geçerli
