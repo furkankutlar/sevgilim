@@ -42,6 +42,7 @@ setInterval(update, 1000);
 const heartsContainer = document.getElementById('hearts');
 const heartChars = ['💗','💕','♡'];
 function spawnHeart(){
+  if(document.hidden || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const el = document.createElement('div');
   el.className = 'heart';
   el.textContent = heartChars[Math.floor(Math.random()*heartChars.length)];
@@ -154,15 +155,40 @@ if(celebrationQuiz && celebrationResult){
 const SUPABASE_URL = "https://gxsagwouvimjlzbovyay.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4c2Fnd291dmltamx6Ym92eWF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDk1MDUsImV4cCI6MjA5ODgyNTUwNX0.8GViEPzagEaKg8vAAfOh429JnqQ6OcJvmb1E7XFX93E";
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function fetchWithTimeout(input, options = {}){
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  if(options.signal?.aborted) controller.abort();
+  else options.signal?.addEventListener('abort', abort, { once: true });
+  const timeout = setTimeout(abort, 30000);
+  try{ return await fetch(input, { ...options, signal: controller.signal }); }
+  finally{ clearTimeout(timeout); options.signal?.removeEventListener('abort', abort); }
+}
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  global: { fetch: fetchWithTimeout }
+});
+const connectionStatus = document.getElementById('connectionStatus');
+function updateConnectionStatus(){
+  connectionStatus.hidden = navigator.onLine;
+  connectionStatus.textContent = navigator.onLine ? '' : 'Çevrimdışısın. Bağlantı gelince tekrar deneyeceğiz.';
+}
+window.addEventListener('online', updateConnectionStatus);
+window.addEventListener('offline', updateConnectionStatus);
+updateConnectionStatus();
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => console.warn('Çevrimdışı kullanım hazırlanamadı.'));
+  });
+}
 
 const memoriesGrid = document.getElementById('memoriesGrid');
 const bucketListContainer = document.getElementById('bucketListContainer');
 
 function escapeHtml(str){
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  return String(str ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[char]));
 }
 
 function formatDate(dateStr){
@@ -196,7 +222,7 @@ function renderMemories(memories){
   }
   memoriesGrid.innerHTML = memories.map(m => `
     <div class="memory-card" data-id="${m.id}">
-      ${m.image_url ? `<img src="${escapeHtml(m.image_url)}" alt="" onerror="this.remove()">` : ''}
+      ${m.image_url ? `<img src="${escapeHtml(m.image_url)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ''}
       <div class="memory-date">${formatDate(m.memory_date)} <span class="memory-ago">· ${timeAgo(m.memory_date)}</span></div>
       <div class="memory-title">${escapeHtml(m.title)}</div>
       <div class="memory-actions">
@@ -788,7 +814,8 @@ function urlBase64ToUint8Array(base64String){
 }
 
 async function enableNotifications(){
-  if(!('serviceWorker' in navigator) || !('PushManager' in window)){
+  if(!myIdentity){ identityModalOverlay.classList.add('open'); return; }
+  if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)){
     alert('Bu tarayıcı bildirimleri desteklemiyor. iPhone kullanıyorsan siteyi Safari üzerinden "Ana Ekrana Ekle" yaptığından ve ana ekrandaki simgeden açtığından emin ol.');
     return;
   }
@@ -800,8 +827,8 @@ async function enableNotifications(){
       return;
     }
 
-    const registration = await navigator.serviceWorker.register('sw.js');
-    await navigator.serviceWorker.ready;
+    await navigator.serviceWorker.register('sw.js');
+    const registration = await navigator.serviceWorker.ready;
 
     let subscription = await registration.pushManager.getSubscription();
     if(!subscription){
@@ -836,11 +863,14 @@ async function enableNotifications(){
 
 async function sendNotification(title, body, excludeOwner, type){
   try{
-    await fetch('/api/send-notification', {
+    const response = await fetchWithTimeout('/api/send-notification', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, body, excludeOwner: excludeOwner || null, type: type || null })
+      body: JSON.stringify({ title, body, excludeOwner: excludeOwner || myIdentity || null, type: type || null })
     });
+    if(!response.ok) throw new Error('Bildirim iletilemedi: ' + response.status);
+    const result = await response.json();
+    if(result.total > 0 && result.sent === 0) throw new Error('Bildirim iletilemedi.');
   }catch(err){
     console.error('Bildirim gönderme hatası:', err);
   }
@@ -852,9 +882,7 @@ enableNotifBtn.addEventListener('click', enableNotifications);
 // ============================================================
 // SAYFA YÜKLENİNCE
 // ============================================================
-fetchMemories();
-fetchBucketList();
-fetchSpecialDays();
+// Listeler ilgili sekme açıldığında yüklenir.
 
 // ============================================================
 // SEKME ÇUBUĞU (ALT NAVİGASYON)
@@ -862,8 +890,10 @@ fetchSpecialDays();
 const tabButtons = document.querySelectorAll('.tab-btn');
 const tabPages = document.querySelectorAll('.tab-page');
 let chatPollInterval = null;
+let currentTab = 'home';
 
 function switchTab(tabName){
+  currentTab = tabName;
   tabPages.forEach(page => {
     const isTarget = page.dataset.page === tabName;
     // Yeniden animasyonun her seferinde oynaması için önce sınıfı kaldırıp
@@ -890,22 +920,10 @@ function switchTab(tabName){
   // buradan anlayıp, öyleyse bildirimi hiç göstermiyor.
   try{ history.replaceState(null, '', tabName === 'home' ? (location.pathname + location.search) : ('#' + tabName)); }catch(e){}
 
-  // Mesajlar sekmesindeyken realtime çalışmasa bile mesajlar tazelensin diye
-  // her birkaç saniyede bir otomatik yenileme yapılır; sekmeden çıkınca durur.
-  if(tabName === 'chat'){
-    markMessagesAsRead().then(fetchMessages).then(updateChatBadge).then(() => {
-      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-    });
-    if(!chatPollInterval){
-      chatPollInterval = setInterval(() => {
-        markMessagesAsRead().then(fetchMessages).then(updateChatBadge);
-      }, 3000);
-    }
-  }else if(chatPollInterval){
-    clearInterval(chatPollInterval);
-    chatPollInterval = null;
-    hideTypingIndicator();
-  }
+  syncChatActivity();
+  if(tabName === 'memories') void fetchMemories();
+  if(tabName === 'bucket') void fetchBucketList();
+  if(tabName === 'special') void fetchSpecialDays();
 
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
@@ -946,6 +964,7 @@ const changeIdentityBtn = document.getElementById('changeIdentityBtn');
 
 let myIdentity = null;
 try{ myIdentity = localStorage.getItem('biz-identity'); }catch(e){}
+if(!['Furki', 'Hilalişko'].includes(myIdentity)) myIdentity = null;
 
 async function updateSubscriptionIdentity(){
   if(!myIdentity) return;
@@ -966,11 +985,13 @@ async function updateSubscriptionIdentity(){
 }
 
 function setIdentity(name){
+  if(!['Furki', 'Hilalişko'].includes(name)) return;
   myIdentity = name;
   try{ localStorage.setItem('biz-identity', name); }catch(e){}
   chatIdentityLabel.textContent = `Sen: ${name}`;
   identityModalOverlay.classList.remove('open');
-  fetchMessages();
+  renderMessages();
+  syncChatActivity();
   updateSubscriptionIdentity();
   updateChatBadge();
 }
@@ -988,206 +1009,3 @@ if(myIdentity){
 }else{
   identityModalOverlay.classList.add('open');
 }
-
-// ============================================================
-// MESAJLAR (SOHBET)
-// ============================================================
-const chatMessagesEl = document.getElementById('chatMessages');
-const chatInput = document.getElementById('chatInput');
-const chatSendBtn = document.getElementById('chatSendBtn');
-const chatBadge = document.getElementById('chatBadge');
-const chatInputRow = document.getElementById('chatInputRow');
-const typingIndicator = document.getElementById('typingIndicator');
-
-function formatChatTime(dateStr){
-  const d = new Date(dateStr);
-  return d.toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-}
-
-let lastMessageCount = 0;
-let renderedMessageIds = new Set();
-
-function renderMessages(messages){
-  if(!messages || messages.length === 0){
-    chatMessagesEl.innerHTML = '<div class="memories-empty">Henüz mesaj yok, ilk mesajı sen yaz! 💗</div>';
-    lastMessageCount = 0;
-    renderedMessageIds = new Set();
-    return;
-  }
-
-  const wasNearBottom = (chatMessagesEl.scrollHeight - chatMessagesEl.scrollTop - chatMessagesEl.clientHeight) < 80;
-  const isNewMessage = messages.length !== lastMessageCount;
-
-  chatMessagesEl.innerHTML = messages.map(m => {
-    const mine = m.sender === myIdentity;
-    const seenLabel = (mine && m.read_at) ? ' · Görüldü ✓✓' : (mine ? ' · Gönderildi ✓' : '');
-    const isNewBubble = !renderedMessageIds.has(m.id);
-    return `
-    <div class="chat-bubble ${mine ? 'mine' : 'theirs'}${isNewBubble ? ' bubble-new' : ''}">
-      ${escapeHtml(m.content)}
-      <span class="chat-time">${mine ? '' : escapeHtml(m.sender) + ' · '}${formatChatTime(m.created_at)}${seenLabel}</span>
-    </div>
-  `;
-  }).join('');
-
-  renderedMessageIds = new Set(messages.map(m => m.id));
-
-  // Kullanıcı zaten en altta duruyorsa veya yeni bir mesaj geldiyse aşağı kaydır;
-  // eski mesajları okumak için yukarı kaydırmışsa yerini bozma
-  if(wasNearBottom || isNewMessage){
-    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-  }
-  lastMessageCount = messages.length;
-}
-
-async function updateChatBadge(){
-  if(!myIdentity){ chatBadge.style.display = 'none'; return; }
-  try{
-    const { count, error } = await supabaseClient
-      .from('messages')
-      .select('*', { count: 'exact', head: true })
-      .neq('sender', myIdentity)
-      .is('read_at', null);
-    if(error){ console.error('Rozet hatası:', error); return; }
-    chatBadge.style.display = (count && count > 0) ? 'block' : 'none';
-  }catch(e){
-    console.error('Rozet hatası:', e);
-  }
-}
-
-async function markMessagesAsRead(){
-  if(!myIdentity) return;
-  try{
-    const { error } = await supabaseClient
-      .from('messages')
-      .update({ read_at: new Date().toISOString() })
-      .neq('sender', myIdentity)
-      .is('read_at', null);
-    if(error) console.error('Okundu işaretleme hatası:', error);
-  }catch(e){
-    console.error('Okundu işaretleme hatası:', e);
-  }
-}
-
-async function fetchMessages(){
-  const { data, error } = await supabaseClient
-    .from('messages')
-    .select('*')
-    .order('created_at', { ascending: true })
-    .limit(200);
-
-  if(error){
-    console.error('Mesaj hatası:', error);
-    chatMessagesEl.innerHTML = '<div class="memories-error">Mesajlar yüklenirken bir hata oluştu.</div>';
-    return;
-  }
-  renderMessages(data);
-}
-
-async function sendMessage(){
-  const content = chatInput.value.trim();
-  if(!content) return;
-  if(!myIdentity){
-    identityModalOverlay.classList.add('open');
-    return;
-  }
-
-  chatSendBtn.disabled = true;
-  const { error } = await supabaseClient.from('messages').insert([{ sender: myIdentity, content }]);
-  chatSendBtn.disabled = false;
-
-  if(error){
-    console.error(error);
-    alert('Mesaj gönderilemedi, tekrar dener misin?');
-    return;
-  }
-
-  chatInput.value = '';
-  await fetchMessages();
-  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-  sendNotification(`💬 ${myIdentity}`, content, myIdentity, 'chat');
-}
-
-chatSendBtn.addEventListener('click', sendMessage);
-chatInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
-
-// ============================================================
-// "YAZIYOR..." GÖSTERGESİ
-// ============================================================
-let typingHideTimeout = null;
-let lastTypingSentAt = 0;
-
-function isChatTabActive(){
-  const chatPage = document.querySelector('.tab-page[data-page="chat"]');
-  return !!(chatPage && chatPage.classList.contains('active'));
-}
-
-function showTypingIndicator(senderName){
-  if(!isChatTabActive()) return;
-  typingIndicator.textContent = `${senderName} yazıyor...`;
-  typingIndicator.style.display = 'block';
-  clearTimeout(typingHideTimeout);
-  typingHideTimeout = setTimeout(() => {
-    typingIndicator.style.display = 'none';
-  }, 3000);
-}
-
-function hideTypingIndicator(){
-  clearTimeout(typingHideTimeout);
-  typingIndicator.style.display = 'none';
-}
-
-const typingChannel = supabaseClient.channel('typing-status', {
-  config: { broadcast: { self: false } }
-});
-
-typingChannel
-  .on('broadcast', { event: 'typing' }, (payload) => {
-    if(payload.payload && payload.payload.sender && payload.payload.sender !== myIdentity){
-      showTypingIndicator(payload.payload.sender);
-    }
-  })
-  .subscribe();
-
-chatInput.addEventListener('input', () => {
-  if(!myIdentity) return;
-  const now = Date.now();
-  if(now - lastTypingSentAt > 1500){
-    lastTypingSentAt = now;
-    typingChannel.send({
-      type: 'broadcast',
-      event: 'typing',
-      payload: { sender: myIdentity }
-    });
-  }
-});
-
-// Yeni mesaj geldiğinde anlık güncelleme (Supabase Realtime)
-supabaseClient
-  .channel('messages-realtime')
-  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
-    hideTypingIndicator();
-    const chatPage = document.querySelector('.tab-page[data-page="chat"]');
-    if(chatPage && chatPage.classList.contains('active')){
-      markMessagesAsRead().then(fetchMessages).then(updateChatBadge);
-    }else{
-      fetchMessages();
-      updateChatBadge();
-    }
-  })
-  .subscribe((status) => {
-    console.log('Realtime durumu:', status);
-  });
-
-fetchMessages();
-updateChatBadge();
-
-// ============================================================
-// SON AÇIK KALINAN SEKMEYİ HATIRLAMA
-// ============================================================
-try{
-  const savedTab = localStorage.getItem('biz-last-tab');
-  if(savedTab && savedTab !== 'home' && document.querySelector(`.tab-page[data-page="${savedTab}"]`)){
-    switchTab(savedTab);
-  }
-}catch(e){}
