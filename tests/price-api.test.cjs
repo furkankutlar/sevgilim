@@ -21,6 +21,14 @@ function api(){
 test('public list reads do not run checks once baseline exists',async()=>{
   const a=api(),r=await a.request();assert.equal(r.code,200);assert.equal(r.body.products.length,2);assert.equal(a.checks.length,0);
 });
+
+test('paused Watsons baseline does not trigger fetch-on-read and status is explicit',async()=>{
+  const a=api();a.state.products[1].price=null;
+  const r=await a.request();assert.equal(r.code,200);assert.equal(a.checks.length,0);
+  assert.equal(r.body.products[0].automationAvailable,true);
+  assert.equal(r.body.products[1].automationAvailable,false);
+  assert.match(r.body.products[1].error,/beklemede/);
+});
 test('scheduled checks require server secret; missing and wrong credentials rejected',async()=>{
   const a=api();assert.equal((await a.request({query:{job:'daily'}})).code,401);
   assert.equal((await a.request({query:{job:'daily'},headers:{authorization:'Bearer wrong'}})).code,401);

@@ -17,7 +17,7 @@ function rig(){
   const blob=fakeBlob(),store=createStore(blob),sent=[];
   let at='2026-11-10T13:00:00Z',fail=false,stock=true;
   const prices={Gratis:100,Watsons:200};
-  const monitor=createMonitor({store,now:()=>new Date(at),fetchProduct:async url=>{
+  const monitor=createMonitor({store,now:()=>new Date(at),sourceAvailable:()=>true,fetchProduct:async url=>{
     if(fail)throw Error('blocked');const product=productUrl(url);return{...product,name:product.store+' Test',price:prices[product.store],inStock:stock,image:null};
   },notifier:{prepare:async owner=>({count:1,send:async(items,day)=>{sent.push({owner,items,day});return{sent:1};}})}});
   return{store,blob,monitor,sent,prices,time:value=>{at=value;},fail:value=>{fail=value;},stock:value=>{stock=value;}};
@@ -126,4 +126,14 @@ test('missing first price can be repaired without notifications or weakening nor
 test('missing-price retries are limited to once every thirty minutes',async()=>{
   const r=rig();r.fail(true);await r.monitor();r.time('2026-11-10T13:01:00Z');await r.monitor({onlyMissing:true,notify:false});
   r.time('2026-11-10T13:02:00Z');assert.equal((await r.monitor({onlyMissing:true,notify:false})).skipped,true);
+});
+
+test('paused Watsons source is never fetched or notified by the production monitor',async()=>{
+  const r=rig(),fetched=[];
+  const monitor=createMonitor({store:r.store,now:()=>new Date('2026-11-10T13:00:00Z'),fetchProduct:async url=>{
+    const product=productUrl(url);fetched.push(product.store);return{...product,name:'Test',price:100,inStock:true};
+  },notifier:{prepare:async()=>{throw Error('initial prices must not send');}}});
+  assert.equal((await monitor()).checked,1);assert.deepEqual(fetched,['Gratis']);
+  assert.equal((await r.store.read()).state.products[1].price,null);
+  assert.equal((await monitor({onlyMissing:true,notify:false})).skipped,true);
 });

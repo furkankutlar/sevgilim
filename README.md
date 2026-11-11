@@ -60,7 +60,12 @@ Pantene 10015186 ve Watsons Urban Care 1300649'dur; yeni bağlantılar da eklene
 Fiyatlar Gratis'in eşleşen ürün JSON-LD Offer verisinden ve Watsons mağazasının
 kendi anonim ürün API'sinden TL olarak ve doğrulanmış stok durumuyla okunur. Watsons
 web sayfası sunucuya 403 verdiği için mağaza uygulamasının kullandığı açık ürün servisi
-seçilmiştir; üye oturumu, kart veya kişisel kupon kullanılmaz. İlgisiz ürün fiyatı, CAPTCHA/hata
+seçilmiştir; üye oturumu, kart veya kişisel kupon kullanılmaz. 11 Kasım kontrolünde bu
+API de Vercel'den 403 döndürdü. Kullanıcının kararıyla Watsons otomatik kontrolü
+beklemeye alınmıştır: bağlantılar ve mevcut ayarlar korunur, fakat bu mağazaya
+zamanlanmış, elle veya ilk fiyat için istek ve bildirim gönderilmez. Ekran bu durumu
+açıkça gösterir; destek yeniden doğrulanana kadar yalnızca Gratis aktiftir.
+İlgisiz ürün fiyatı, CAPTCHA/hata
 sayfası, başka sunucuya yönlendirme ve belirsiz fiyatlar reddedilir. Başarısız
 kontrol önceki fiyatı ve son başarılı kontrol zamanını değiştirmez.
 
@@ -70,6 +75,8 @@ sunucudadır. Private Vercel Blob deposu projeye bağlanmıştır; SDK otomatik 
 `BLOB_READ_WRITE_TOKEN` ile kalıcı state kullanır. Yazmalar ETag koşuluyla yapılır;
 4 dakikalık lease aynı kontrolün paralel çalışmasını önler. Elle kontroller dahil
 kontroller arasında en az 6 saat vardır. Uygulamanın açık olması gerekmez.
+Fiyat ekranı uzun kontroller için 170 saniyelik ayrı istek süresi kullanır; hata
+halinde kaydedilmemiş form değerleri korunur ve liste için yeniden yükleme sunulur.
 
 İlk fiyat bildirimsiz başlangıçtır. Hedef yoksa takipte gözlenen en yüksek geçerli
 fiyattan en az %5 ve 5 TL düşüş; hedef varsa hedefin altına inen gerçek düşüş gerekir.
