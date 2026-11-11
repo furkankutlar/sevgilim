@@ -19,21 +19,21 @@
   function setBusy(value){busy=value;checkBtn.disabled=value;addBtn.disabled=value;retryBtn.disabled=value;list.setAttribute('aria-busy',String(value));}
   function render(data){
     document.getElementById('priceLastCheck').textContent='Son kontrol: '+date(data.lastCompletedAt);
-    list.innerHTML=data.products.map(item=>{
+    list.innerHTML=data.products.length?data.products.map(item=>{
       const history=item.history.slice(-3).reverse();
       const cheaper=item.price!=null && item.referencePrice!=null && item.price<item.referencePrice;
-      const available=item.automationAvailable!==false;
-      return `<article class="price-card ${available&&item.enabled?'':'price-paused'}" data-price-id="${escapeHtml(item.id)}">
+      return `<article class="price-card ${item.enabled?'':'price-paused'}" data-price-id="${escapeHtml(item.id)}">
         <div class="price-product-top">${item.image?`<img src="${escapeHtml(item.image)}" alt="" width="72" height="88" loading="lazy" decoding="async">`:''}<div><span class="price-store">${escapeHtml(item.store)}</span><h3>${escapeHtml(item.name)}</h3><a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Mağazada gör ↗</a></div></div>
-        <div class="price-current"><strong>${item.price==null?(available?'Fiyat bekleniyor':'Otomatik takip beklemede'):money(item.price)}</strong>${cheaper?`<span>Takipte görülen üst fiyattan %${Math.round((1-item.price/item.referencePrice)*100)} düşük</span>`:''}</div>
-        <p class="price-meta">${item.inStock===false?'Stokta görünmüyor · ':''}${!available?'Otomatik fiyat alınamıyor':item.enabled?'Takip açık':'Takip duraklatıldı'} · ${escapeHtml(date(item.lastCheckedAt))}</p>
+        <div class="price-current"><strong>${item.price==null?'Fiyat bekleniyor':money(item.price)}</strong>${cheaper?`<span>Takipte görülen üst fiyattan %${Math.round((1-item.price/item.referencePrice)*100)} düşük</span>`:''}</div>
+        <p class="price-meta">${item.inStock===false?'Stokta görünmüyor · ':''}${item.enabled?'Takip açık':'Takip duraklatıldı'} · ${escapeHtml(date(item.lastCheckedAt))}</p>
         ${item.error?`<p class="price-error">${escapeHtml(item.error)}</p>`:''}
         <form class="price-card-form"><div class="price-form-row"><div><label>Hedef fiyat (isteğe bağlı)<input class="price-target" type="number" inputmode="decimal" min="0.01" max="100000" step="0.01" placeholder="Örn. 250" value="${item.target??''}"></label></div><div><label>Bildirim alacak kişi<select class="price-owner"><option value="Hilalişko" ${item.owner==='Hilalişko'?'selected':''}>Hilalişko</option><option value="Furki" ${item.owner==='Furki'?'selected':''}>Furki</option></select></label></div></div>
-        <label class="price-enabled-label"><input class="price-enabled" type="checkbox" ${item.enabled?'checked':''} ${available?'':'disabled'}> ${available?'Bu ürünü takip et':'Otomatik takip yeniden açılana kadar beklemede'}</label>
+        <label class="price-enabled-label"><input class="price-enabled" type="checkbox" ${item.enabled?'checked':''}> Bu ürünü takip et</label>
         <button class="btn-secondary" type="submit">Ayarları kaydet</button></form>
         ${history.length?`<details class="price-history"><summary>Kaydedilen fiyatlar</summary><ul>${history.map(point=>`<li><span>${escapeHtml(date(point.at))}</span><strong>${money(point.price)}</strong></li>`).join('')}</ul></details>`:''}
+        <details class="price-delete"><summary>Ürünü listeden sil</summary><p>Bu ürün ve fiyat geçmişi ortak listenizden silinecek. Bildirim takibi de duracak.</p><button class="btn-secondary" type="button" data-price-delete>Evet, listeden sil</button></details>
       </article>`;
-    }).join('');
+    }).join(''):'<p class="price-empty">Henüz takip edilen ürün yok. Yukarıdan bir Gratis ürün bağlantısı ekleyebilirsin.</p>';
   }
   async function load(force=false){
     if(busy||(!force&&Date.now()-loadedAt<60000))return;
@@ -60,6 +60,16 @@
       const result=await request({action:'add',url:document.getElementById('priceProductUrl').value.trim(),owner:document.getElementById('priceProductOwner').value});
       document.getElementById('priceProductUrl').value='';feedback.textContent=result.message;saved=true;
     }catch(error){feedback.textContent=error.message;retryBtn.hidden=false;}finally{setBusy(false);if(saved)await load(true);}
+  });
+  list.addEventListener('click',async event=>{
+    const button=event.target.closest('[data-price-delete]');if(!button||busy)return;
+    const card=button.closest('[data-price-id]');setBusy(true);button.disabled=true;let deleted=false;
+    try{
+      await request({action:'delete',id:card.dataset.priceId});
+      feedback.textContent='Ürün listeden silindi; takibi durduruldu.';deleted=true;
+      card.remove();
+    }catch(error){feedback.textContent=error.message;retryBtn.hidden=false;}
+    finally{setBusy(false);button.disabled=false;if(deleted)await load(true);}
   });
   list.addEventListener('submit',async event=>{
     const form=event.target.closest('.price-card-form');if(!form)return;event.preventDefault();if(busy)return;

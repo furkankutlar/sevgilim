@@ -53,21 +53,20 @@ gönderilmez; bu durumda ilk bildirim kaçmış olabilir.
 
 ### İndirim defteri
 
-Ana sayfadaki İndirim defterimiz kartı `/\#prices` bölümünü açar. İlk iki ürün Gratis
-Pantene 10015186 ve Watsons Urban Care 1300649'dur; yeni bağlantılar da eklenebilir
-(en fazla 10 ürün). Ürünler kişi bazında duraklatılabilir ve hedef fiyat verilebilir.
+Ana sayfadaki İndirim defterimiz kartı `/#prices` bölümünü açar. Yalnızca Gratis
+ürün bağlantıları kabul edilir (en fazla 10 ürün). İlk kurulumda Pantene 10015186
+başlangıç ürünüdür. Kullanıcı sildikten sonra yeniden eklenmez; boş liste korunur.
+Önceki Watsons kayıtları koşullu Blob yazmasıyla kalıcı olarak temizlenir.
 
-Fiyatlar Gratis'in eşleşen ürün JSON-LD Offer verisinden ve Watsons mağazasının
-kendi anonim ürün API'sinden TL olarak ve doğrulanmış stok durumuyla okunur. Watsons
-web sayfası sunucuya 403 verdiği için mağaza uygulamasının kullandığı açık ürün servisi
-seçilmiştir; üye oturumu, kart veya kişisel kupon kullanılmaz. 11 Kasım kontrolünde bu
-API de Vercel'den 403 döndürdü. Kullanıcının kararıyla Watsons otomatik kontrolü
-beklemeye alınmıştır: bağlantılar ve mevcut ayarlar korunur, fakat bu mağazaya
-zamanlanmış, elle veya ilk fiyat için istek ve bildirim gönderilmez. Ekran bu durumu
-açıkça gösterir; destek yeniden doğrulanana kadar yalnızca Gratis aktiftir.
-İlgisiz ürün fiyatı, CAPTCHA/hata
-sayfası, başka sunucuya yönlendirme ve belirsiz fiyatlar reddedilir. Başarısız
-kontrol önceki fiyatı ve son başarılı kontrol zamanını değiştirmez.
+Ürün kartında hedef fiyat, bildirim alacak kişi, duraklatma ve iki adımlı silme
+bulunur. Silme ürünle birlikte kayıtlı fiyat geçmişini kaldırır, takibini durdurur.
+Kaybolan yanıtta silme tekrar denenebilir; ikinci istek de başarılı kabul edilir.
+Kontrol sürerken silinen ürün sonuç kaydı sırasında yeniden oluşturulmaz.
+
+Fiyatlar Gratis'in eşleşen ürün JSON-LD Offer verisinden TL olarak ve doğrulanmış
+stok durumuyla okunur. Üyelik, kart veya kişisel kupon kullanılmaz. İlgisiz ürün,
+CAPTCHA/hata sayfası, başka sunucuya yönlendirme ve belirsiz fiyatlar reddedilir.
+Başarısız kontrol önceki fiyatı ve son başarılı kontrol zamanını değiştirmez.
 
 `vercel.json` günlük 13:00 UTC (İstanbul 16:00, Hobby zamanlama aralığıyla 16–17)
 kontrolünü `/api/price-tracker?job=daily` üzerinden çalıştırır. `CRON_SECRET` yalnızca

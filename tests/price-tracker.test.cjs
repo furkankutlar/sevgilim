@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const {productUrl,parseProduct,parseWatsonsData,fetchProduct,SEEDS}=require('../lib/price-source.cjs');
+const {productUrl,parseProduct,fetchProduct,SEEDS}=require('../lib/price-source.cjs');
 const {createStore}=require('../lib/price-store.cjs');
 const {createMonitor,qualifies}=require('../lib/price-monitor.cjs');
 function html(price=362,extra={}){return '<script type="application/ld+json">'+JSON.stringify({'@type':'Product',name:'Test ürünü',sku:'10015186',image:'https://img.example/product.jpg',offers:{'@type':'Offer',price,priceCurrency:'TRY',availability:'https://schema.org/InStock'},...extra})+'</script>';}
@@ -16,15 +16,15 @@ function fakeBlob(){
 function rig(){
   const blob=fakeBlob(),store=createStore(blob),sent=[];
   let at='2026-11-10T13:00:00Z',fail=false,stock=true;
-  const prices={Gratis:100,Watsons:200};
+  const prices={Gratis:100};
   const monitor=createMonitor({store,now:()=>new Date(at),sourceAvailable:()=>true,fetchProduct:async url=>{
     if(fail)throw Error('blocked');const product=productUrl(url);return{...product,name:product.store+' Test',price:prices[product.store],inStock:stock,image:null};
   },notifier:{prepare:async owner=>({count:1,send:async(items,day)=>{sent.push({owner,items,day});return{sent:1};}})}});
   return{store,blob,monitor,sent,prices,time:value=>{at=value;},fail:value=>{fail=value;},stock:value=>{stock=value;}};
 }
-test('only canonical Gratis/Watsons product URLs accepted; tracking parameters stripped',()=>{
+test('only canonical Gratis product URLs accepted; tracking parameters stripped',()=>{
   const original=productUrl(SEEDS[0].url);assert.equal(productUrl(SEEDS[0].url+'?utm_source=test').id,original.id);
-  for(const url of ['http://www.gratis.com/a-p-12','https://gratis.com.evil.example/a-p-12','https://127.0.0.1/a-p-12','https://name:password@www.gratis.com/a-p-12','https://www.gratis.com:444/a-p-12','https://www.watsons.com.tr/anything'])assert.throws(()=>productUrl(url));
+  for(const url of ['http://www.gratis.com/a-p-12','https://gratis.com.evil.example/a-p-12','https://127.0.0.1/a-p-12','https://name:password@www.gratis.com/a-p-12','https://www.gratis.com:444/a-p-12','https://www.watsons.com.tr/anything','https://www.watsons.com.tr/urban-care/p/BP_1300649'])assert.throws(()=>productUrl(url));
 });
 test('product structured data parsed, unrelated prices and currencies rejected',()=>{
   assert.equal(parseProduct(html(),SEEDS[0].url).price,362);
@@ -33,9 +33,9 @@ test('product structured data parsed, unrelated prices and currencies rejected',
   assert.throws(()=>parseProduct(html(10,{offers:{'@type':'Offer',price:10,priceCurrency:'USD'}}),SEEDS[0].url));
   assert.throws(()=>parseProduct('<h1>Challenge</h1>',SEEDS[0].url));
 });
-test('Watsons graph and explicit out-of-stock parsed',()=>{
-  const graph={'@graph':[{'@type':'BreadcrumbList'},{'@type':'Product',name:'Urban Care',sku:'1300649',offers:{'@type':'Offer',price:279,priceCurrency:'TRY',availability:'OutOfStock'}}]};
-  const result=parseProduct('<script type="application/ld+json">'+JSON.stringify(graph)+'</script>',SEEDS[1].url);
+test('Gratis graph and explicit out-of-stock parsed',()=>{
+  const graph={'@graph':[{'@type':'BreadcrumbList'},{'@type':'Product',name:'Urban Care',sku:'10015186',offers:{'@type':'Offer',price:279,priceCurrency:'TRY',availability:'OutOfStock'}}]};
+  const result=parseProduct('<script type="application/ld+json">'+JSON.stringify(graph)+'</script>',SEEDS[0].url);
   assert.equal(result.price,279);assert.equal(result.inStock,false);
 });
 test('fetch does not follow redirects to internal or unrelated destinations',async()=>{
@@ -44,7 +44,7 @@ test('fetch does not follow redirects to internal or unrelated destinations',asy
 });
 test('store bootstraps once, retries etag collision without lost update',async()=>{
   const sdk=fakeBlob(),store=createStore(sdk);await Promise.all([store.read(),store.read()]);
-  assert.equal((await store.read()).state.products.length,2);
+  assert.equal((await store.read()).state.products.length,1);
   sdk.failures.writes=1;
   await store.mutate(state=>{state.products[0].target=250;});
   assert.equal((await store.read()).state.products[0].target,250);
@@ -63,20 +63,12 @@ test('conditional writes use storage metadata etag rather than download represen
   sdk.get=async()=>{const value=await get();if(value)value.blob.etag='W/"download-representation"';return value;};
   const store=createStore(sdk);await store.mutate(state=>{state.products[0].target=200;});assert.equal((await store.read()).state.products[0].target,200);
 });
-test('anonymous Watsons storefront API validates product code, currency and stock',async()=>{
-  const target=productUrl(SEEDS[1].url),data={code:'1300649',name:'Urban Care',price:{currencyIso:'TRY',value:279},stock:{stockLevelStatus:'inStock'},images:[{url:'/medias/photo.jpg'}]};
-  const result=parseWatsonsData(data,target);assert.equal(result.price,279);assert.equal(result.image,'https://media.watsons.com.tr/medias/photo.jpg');
-  assert.throws(()=>parseWatsonsData({...data,code:'other'},target));
-  assert.throws(()=>parseWatsonsData({...data,price:{currencyIso:'EUR',value:10}},target));
-  let called;await fetchProduct(SEEDS[1].url,async url=>{called=url;return new Response(JSON.stringify(data));});
-  assert.ok(called.startsWith('https://api.watsons.com.tr/api/v2/wtctr-spa/products/1300649?'));
-});
 test('first observations establish baseline without sending any notification',async()=>{
   const r=rig();await r.monitor();assert.equal(r.sent.length,0);
   const state=(await r.store.read()).state;assert.equal(state.products[0].price,100);assert.equal(state.products[0].history.length,1);
 });
 test('two qualifying drops bundled into one owner digest; repeated check is skipped',async()=>{
-  const r=rig();await r.monitor();r.time('2026-11-11T13:00:00Z');r.prices.Gratis=90;r.prices.Watsons=180;
+  const r=rig();await r.store.mutate(state=>{state.products.push({...structuredClone(state.products[0]),...productUrl('https://www.gratis.com/second-p-123456')});});await r.monitor();r.time('2026-11-11T13:00:00Z');r.prices.Gratis=90;
   await r.monitor();assert.equal(r.sent.length,1);assert.equal(r.sent[0].items.length,2);
   assert.equal((await r.monitor()).skipped,true);assert.equal(r.sent.length,1);
 });
@@ -103,7 +95,7 @@ test('night checks remain silent; observed sale can alert next daytime check',as
 });
 test('failed fetch never overwrites known price or creates notification',async()=>{
   const r=rig();await r.monitor();r.time('2026-11-11T13:00:00Z');r.fail(true);const result=await r.monitor();
-  assert.equal(result.failed,2);assert.equal((await r.store.read()).state.products[0].price,100);assert.equal(r.sent.length,0);
+  assert.equal(result.failed,1);assert.equal((await r.store.read()).state.products[0].price,100);assert.equal(r.sent.length,0);
 });
 test('same owner receives at most one digest per Istanbul day even on further drop',async()=>{
   const r=rig();await r.monitor();r.time('2026-11-11T07:00:00Z');r.prices.Gratis=90;await r.monitor();
@@ -111,7 +103,7 @@ test('same owner receives at most one digest per Istanbul day even on further dr
 });
 test('stale lease expires; active lease prevents concurrent job',async()=>{
   const r=rig();await r.store.mutate(state=>{state.lease={id:'other',expires:'2026-11-10T13:10:00Z'};});
-  assert.equal((await r.monitor()).reason,'running');r.time('2026-11-10T13:11:00Z');assert.equal((await r.monitor()).checked,2);
+  assert.equal((await r.monitor()).reason,'running');r.time('2026-11-10T13:11:00Z');assert.equal((await r.monitor()).checked,1);
 });
 test('no matching device does not mark a sale as notified',async()=>{
   const r=rig();await r.monitor();r.time('2026-11-11T13:00:00Z');r.prices.Gratis=90;
@@ -120,7 +112,7 @@ test('no matching device does not mark a sale as notified',async()=>{
 });
 test('missing first price can be repaired without notifications or weakening normal check interval',async()=>{
   const r=rig();r.fail(true);await r.monitor();r.fail(false);r.time('2026-11-10T13:10:00Z');
-  const result=await r.monitor({onlyMissing:true,notify:false});assert.equal(result.checked,2);assert.equal(r.sent.length,0);
+  const result=await r.monitor({onlyMissing:true,notify:false});assert.equal(result.checked,1);assert.equal(r.sent.length,0);
   assert.equal((await r.store.read()).state.lastRunAt,'2026-11-10T13:00:00.000Z');assert.equal((await r.monitor()).skipped,true);
 });
 test('missing-price retries are limited to once every thirty minutes',async()=>{
@@ -128,12 +120,16 @@ test('missing-price retries are limited to once every thirty minutes',async()=>{
   r.time('2026-11-10T13:02:00Z');assert.equal((await r.monitor({onlyMissing:true,notify:false})).skipped,true);
 });
 
-test('paused Watsons source is never fetched or notified by the production monitor',async()=>{
-  const r=rig(),fetched=[];
-  const monitor=createMonitor({store:r.store,now:()=>new Date('2026-11-10T13:00:00Z'),fetchProduct:async url=>{
-    const product=productUrl(url);fetched.push(product.store);return{...product,name:'Test',price:100,inStock:true};
-  },notifier:{prepare:async()=>{throw Error('initial prices must not send');}}});
-  assert.equal((await monitor()).checked,1);assert.deepEqual(fetched,['Gratis']);
-  assert.equal((await r.store.read()).state.products[1].price,null);
-  assert.equal((await monitor({onlyMissing:true,notify:false})).skipped,true);
+test('legacy Watsons entries are permanently removed while Gratis settings survive',async()=>{
+  const sdk=fakeBlob(),store=createStore(sdk);await store.mutate(state=>{state.products[0].target=250;state.products.push({id:'legacy',store:'Watsons'});});
+  const cleaned=(await store.read()).state;assert.equal(cleaned.products.length,1);assert.equal(cleaned.products[0].target,250);
+  const persisted=await new Response((await sdk.get()).stream).json();assert.equal(persisted.products.length,1);
+  await store.mutate(state=>{state.products=[];});assert.equal((await store.read()).state.products.length,0);
+});
+
+test('deletion during an upstream check cannot resurrect a product or notify it',async()=>{
+  const r=rig();const monitor=createMonitor({store:r.store,fetchProduct:async url=>{
+    await r.store.mutate(state=>{state.products=[];});return{...productUrl(url),price:10,inStock:true,name:'Product'};
+  },notifier:{prepare:async()=>{throw Error('deleted product must not notify');}}});
+  await monitor();assert.equal((await r.store.read()).state.products.length,0);
 });

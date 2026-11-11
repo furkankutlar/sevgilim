@@ -23,7 +23,7 @@ module.exports=async(req,res)=>{
       else if(state.products.some(item=>item.enabled && isSourceAvailable(item) && item.price==null && (item.lastMissingReaderVersion!==READER_VERSION || !item.lastMissingAttemptAt || Date.now()-Date.parse(item.lastMissingAttemptAt)>=1800000))){
         await monitor({notify:false,onlyMissing:true});state=(await store.read()).state;
       }
-      return res.status(200).json({products:state.products.map(item=>({...item,automationAvailable:isSourceAvailable(item),...(!isSourceAvailable(item)?{error:'Watsons otomatik takibi beklemede. Fiyatı mağaza bağlantısından kontrol edebilirsin.'}:{})})),lastCompletedAt:state.lastCompletedAt||null,
+      return res.status(200).json({products:state.products,lastCompletedAt:state.lastCompletedAt||null,
         nextCheckAt:state.lastRunAt?new Date(Date.parse(state.lastRunAt)+INTERVAL).toISOString():null,
         schedule:'Her gün 16:00–17:00 arasında',events:state.events.slice(-10).map(({at,status,owner})=>({at,status,owner}))});
     }
@@ -33,6 +33,15 @@ module.exports=async(req,res)=>{
     if(!String(req.headers['content-type']||'').startsWith('application/json'))return res.status(415).json({error:'JSON gerekli.'});
     if(JSON.stringify(req.body||{}).length>4096)return res.status(400).json({error:'İstek çok uzun.'});
     const {action,id,owner}=req.body||{};
+    if(action==='delete'){
+      if(typeof id!=='string' || !/^[a-f0-9]{24}$/.test(id))return res.status(400).json({error:'Geçersiz ürün.'});
+      await store.mutate(state=>{
+        const index=state.products.findIndex(item=>item.id===id);
+        if(index===-1)return{unchanged:true};
+        state.products.splice(index,1);
+      });
+      return res.status(200).json({ok:true});
+    }
     if(action==='check')return res.status(200).json(await monitor());
     if(action==='add'){
       if(!['Hilalişko','Furki'].includes(owner))return res.status(400).json({error:'Bildirim alacak kişiyi seç.'});
@@ -40,8 +49,7 @@ module.exports=async(req,res)=>{
       const existing=(await store.read()).state.products;
       if(existing.some(item=>item.id===product.id))return res.status(409).json({error:'Bu ürün zaten takip ediliyor.'});
       if(existing.length>=10)return res.status(409).json({error:'En fazla 10 ürün takip edebilirsin.'});
-      const available=isSourceAvailable(product);
-      let baseline=null;if(available){try{baseline=await fetchProduct(product.url);}catch(error){}}
+      let baseline=null;try{baseline=await fetchProduct(product.url);}catch(error){}
       const addedAt=new Date().toISOString();
       const result=await store.mutate(state=>{
         if(state.products.some(item=>item.id===product.id))return{unchanged:true,value:'duplicate'};
@@ -52,7 +60,7 @@ module.exports=async(req,res)=>{
         return{value:'added'};
       });
       if(result!=='added')return res.status(409).json({error:result==='full'?'En fazla 10 ürün takip edebilirsin.':'Bu ürün zaten takip ediliyor.'});
-      return res.status(200).json({ok:true,message:!available?'Bağlantı kaydedildi. Watsons otomatik takibi şimdilik beklemede.':baseline?'Ürün eklendi; başlangıç fiyatı kaydedildi.':'Ürün eklendi. İlk fiyat, sonraki kontrolde bildirim göndermeden kaydedilecek.'});
+      return res.status(200).json({ok:true,message:baseline?'Ürün eklendi; başlangıç fiyatı kaydedildi.':'Ürün eklendi. İlk fiyat, sonraki kontrolde bildirim göndermeden kaydedilecek.'});
     }
     if(action==='update'){
       const {enabled,target}=req.body;

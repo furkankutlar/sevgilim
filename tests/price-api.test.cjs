@@ -19,16 +19,9 @@ function api(){
   }};
 }
 test('public list reads do not run checks once baseline exists',async()=>{
-  const a=api(),r=await a.request();assert.equal(r.code,200);assert.equal(r.body.products.length,2);assert.equal(a.checks.length,0);
+  const a=api(),r=await a.request();assert.equal(r.code,200);assert.equal(r.body.products.length,1);assert.equal(a.checks.length,0);
 });
 
-test('paused Watsons baseline does not trigger fetch-on-read and status is explicit',async()=>{
-  const a=api();a.state.products[1].price=null;
-  const r=await a.request();assert.equal(r.code,200);assert.equal(a.checks.length,0);
-  assert.equal(r.body.products[0].automationAvailable,true);
-  assert.equal(r.body.products[1].automationAvailable,false);
-  assert.match(r.body.products[1].error,/beklemede/);
-});
 test('scheduled checks require server secret; missing and wrong credentials rejected',async()=>{
   const a=api();assert.equal((await a.request({query:{job:'daily'}})).code,401);
   assert.equal((await a.request({query:{job:'daily'},headers:{authorization:'Bearer wrong'}})).code,401);
@@ -37,7 +30,7 @@ test('scheduled checks require server secret; missing and wrong credentials reje
 });
 test('cross-origin writes and invalid stores rejected without adding products',async()=>{
   const a=api();assert.equal((await a.request({method:'POST',headers:{origin:'https://attacker.example',host:'furhi.vercel.app'}})).code,403);
-  const r=await a.request({method:'POST',body:{action:'add',owner:'Hilalişko',url:'https://127.0.0.1/internal'}});assert.equal(r.code,400);assert.equal(a.state.products.length,2);
+  const r=await a.request({method:'POST',body:{action:'add',owner:'Hilalişko',url:'https://127.0.0.1/internal'}});assert.equal(r.code,400);assert.equal(a.state.products.length,1);
 });
 test('duplicate add is rejected before fetching product and settings can pause a tracked item',async()=>{
   const a=api();const item=a.state.products[0];
@@ -50,4 +43,19 @@ test('invalid notification owner and negative target do not modify settings',asy
   assert.equal((await a.request({method:'POST',body:{action:'update',id:item.id,owner:'someone',target:250,enabled:true}})).code,400);
   assert.equal((await a.request({method:'POST',body:{action:'update',id:item.id,owner:'Hilalişko',target:-1,enabled:true}})).code,400);
   assert.equal(item.target,null);
+});
+
+test('delete is persistent and idempotent; malformed and cross-origin deletes are rejected',async()=>{
+  const a=api(),id=a.state.products[0].id;
+  assert.equal((await a.request({method:'POST',body:{action:'delete',id:'bad'}})).code,400);
+  assert.equal(a.state.products.length,1);
+  assert.equal((await a.request({method:'POST',headers:{origin:'https://evil.example',host:'furhi.vercel.app'},body:{action:'delete',id}})).code,403);
+  assert.equal(a.state.products.length,1);
+  assert.equal((await a.request({method:'POST',body:{action:'delete',id}})).code,200);
+  assert.equal((await a.request({method:'POST',body:{action:'delete',id}})).code,200);
+  assert.equal((await a.request()).body.products.length,0);
+});
+test('Watsons product additions are rejected',async()=>{
+  const a=api();assert.equal((await a.request({method:'POST',body:{action:'add',owner:'Hilalişko',url:'https://www.watsons.com.tr/urban-care/p/BP_1300649'}})).code,400);
+  assert.equal(a.state.products.length,1);
 });

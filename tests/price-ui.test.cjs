@@ -14,16 +14,11 @@ function ui(){
   return {element,calls,replies,timers,load:()=>element('priceRetryBtn').events.click(),
     submit:()=>element('priceAddForm').events.submit({preventDefault(){}})};
 }
-test('price list failure offers GET retry and paused source does not appear active',async()=>{
+test('price list failure offers GET retry and empty list invites adding a Gratis product',async()=>{
   const u=ui();u.replies.push(Error('offline'));await u.load();
-  assert.equal(u.element('priceRetryBtn').hidden,false);
-  assert.match(u.element('priceList').textContent,/yüklenemedi/);
-  u.replies.push({products:[{id:'watsons',store:'Watsons',name:'Product',url:'https://www.watsons.com.tr/p/BP_1',
-    enabled:true,automationAvailable:false,price:null,history:[],target:null,owner:'Hilalişko',error:'Otomatik takip beklemede.'}]});
-  await u.load();assert.equal(u.calls.length,2);assert.equal(u.calls[1].options.method,undefined);
-  assert.equal(u.element('priceRetryBtn').hidden,true);
-  assert.match(u.element('priceList').innerHTML,/Otomatik takip beklemede/);
-  assert.doesNotMatch(u.element('priceList').innerHTML,/Takip açık/);
+  assert.equal(u.element('priceRetryBtn').hidden,false);assert.match(u.element('priceList').textContent,/yüklenemedi/);
+  u.replies.push({products:[]});await u.load();assert.equal(u.calls.length,2);assert.equal(u.calls[1].options.method,undefined);
+  assert.equal(u.element('priceRetryBtn').hidden,true);assert.match(u.element('priceList').innerHTML,/Gratis ürün bağlantısı/);
   assert.equal(u.element('priceCheckBtn').disabled,false);
 });
 test('failed settings save retains typed target and does not replace existing cards',async()=>{
@@ -44,4 +39,12 @@ test('add request locks controls and uncertain timeout preserves URL without aut
   assert.match(u.element('priceFeedback').textContent,/sunucuda sürüyor/);
   assert.equal(u.element('priceProductUrl').value,'https://www.gratis.com/product-p-123');
   assert.equal(u.element('priceCheckBtn').disabled,false);
+});
+
+test('delete only runs after explicit confirmation and failure keeps the card',async()=>{
+  const u=ui();let removed=false;const card={dataset:{priceId:'abc'},remove(){removed=true;}},button={disabled:false,closest:()=>card};
+  const click=()=>u.element('priceList').events.click({target:{closest:()=>button}});
+  u.replies.push(Error('offline'));await click();assert.equal(removed,false);assert.equal(button.disabled,false);
+  assert.equal(JSON.parse(u.calls[0].options.body).action,'delete');
+  u.replies.push({ok:true},{products:[]});await click();assert.equal(removed,true);assert.match(u.element('priceList').innerHTML,/Henüz takip/);
 });
