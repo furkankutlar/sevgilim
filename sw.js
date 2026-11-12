@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'biz-shell-2026-11-12-wallet-v1';
+const SHELL_CACHE = 'biz-shell-2026-11-12-wallet-nav-v2';
 const SHELL_PATHS = ['/', '/index.html', '/style.css', '/script.js', '/chat.js', '/mobile.js', '/daily-question.js', '/price-tracker.js', '/manifest.json',
   '/wallet.css', '/wallet.js', '/wallet-model.js', '/vendor/supabase.js', '/vendor/cropper.min.js', '/vendor/cropper.min.css',
   '/icons/icon.svg', '/icons/apple-touch-icon.png', '/icons/icon-192.png', '/icons/icon-512.png'];

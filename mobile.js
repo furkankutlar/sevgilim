@@ -41,6 +41,11 @@
       if(active) button.setAttribute('aria-current', 'page');
       else button.removeAttribute('aria-current');
     });
+    const settings=document.querySelector('.settings-shortcut');
+    if(settings){
+      if(document.body.dataset.currentTab==='settings')settings.setAttribute('aria-current','page');
+      else settings.removeAttribute('aria-current');
+    }
     scheduleViewport();
   }
 
