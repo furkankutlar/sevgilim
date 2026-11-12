@@ -25,6 +25,7 @@
 
 <link rel="stylesheet" href="vendor/cropper.min.css">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="wallet.css">
 <script src="vendor/cropper.min.js"></script>
 <script src="vendor/supabase.js"></script>
 </head>
@@ -79,6 +80,7 @@
       </section>
 
       <button class="price-shortcut" id="openPriceTracker" type="button"><span><strong>İndirim defterimiz</strong><small>Gratis istek listesi</small></span><span aria-hidden="true">↗</span></button>
+      <button class="price-shortcut wallet-shortcut" id="openWallet" type="button"><span><strong>Cüzdanımız</strong><small>Kasalar, gelirler ve harcamalar</small></span><span aria-hidden="true">↗</span></button>
 
       <section class="together-note" aria-label="Bize dair">
         <span class="together-heart" aria-hidden="true">♡</span>
@@ -177,6 +179,11 @@
       <p class="price-footnote">Aynı veya daha yüksek indirim fiyatı için tekrar bildirim gönderilmez. Kontroller arasında en az 6 saat vardır. Mağaza fiyatı okunamazsa önceki kayıt korunur ve eski kontrol tarihi gösterilir.</p>
     </div>
 
+    <div class="tab-page wallet-page" data-page="wallet">
+      <button type="button" id="walletBack" class="wallet-back">← Ana sayfa</button>
+      <p id="walletFeedback" class="wallet-feedback" role="status" aria-live="polite"></p>
+      <div id="walletRoot"><p class="wallet-empty">Cüzdan yükleniyor…</p></div>
+    </div>
     <!-- ================= AYARLAR ================= -->
     <div class="tab-page" data-page="settings">
       <section class="notify-section">
@@ -284,6 +291,9 @@
   <script src="chat.js"></script>
   <script src="daily-question.js"></script>
   <script src="price-tracker.js"></script>
+  <dialog id="walletDialog" class="wallet-dialog" aria-label="Cüzdan işlemi"><form id="walletForm"></form></dialog>
+  <script src="wallet-model.js"></script>
+  <script src="wallet.js"></script>
   <script src="mobile.js"></script>
 </body>
 </html>

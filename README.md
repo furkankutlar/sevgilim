@@ -51,6 +51,36 @@ gönderilmez; bu durumda ilk bildirim kaçmış olabilir.
 
 ## Erişim sınırları
 
+### Cüzdan
+
+Ana sayfadaki Cüzdanımız kartı `/#wallet` görünümünü açar. Video referansındaki
+koyu yeşil/mint görünüm mobil ekran için uyarlanmıştır. Kasalarım / Tüm kasalar,
+güncel toplam bakiye, ay seçimi, aylık gelir-gider, kategori dağılımı ve hareket
+listesi bulunur. Başlangıç bakiyesi gelire, kasalar arası aktarım gelir-gidere
+eklenmez. Negatif bakiye mümkündür; bu gerçek banka işlemi yapmayan manuel kayıt defteridir.
+
+Kullanıcının açık kararıyla eşleştirme kodu veya yeni giriş akışı eklenmedi.
+Furki / Hilalişko isim seçimi kullanılır; her ikisi de bütün kayıtları görür.
+İşlemler sunucuda bildirilen kasa sahibine göre kontrol edilir, fakat isim seçimi
+kimlik doğrulama değildir: siteye ulaşan biri başka adı seçebilir ve API okunabilir.
+Bu bölüm gerçek oturum açma eklenene kadar hassas finansal kayıtlar için erişim
+güvencesi sağlamaz. Private Blob dosyası tek başına API yetkilendirmesi değildir.
+
+Sunucu `wallet/shared-v1.json` dosyasını mevcut private Blob deposuna yazar;
+indirim takip dosyasına dokunmaz. Kuruş cinsinden tamsayı aritmetiği, aynı UUID
+ile yinelenen istekte çift kayıt önleme, ETag koşullu yazma ve kayıt revizyonu
+kontrolleri kullanılır. Silinen kayıtlar eski düzenleme yanıtıyla yeniden oluşmaz.
+Başarısız/belirsiz yazma isteği cihazda saklanır; kullanıcı aynı isteği yeniden
+göndererek tamamlar. Bekleyen işlem varken yeni yazma engellenir. İnternetsizken
+yeni kayıt yapılmaz; uygulama çevrimiçi çalışır. Cüzdan API'si service worker
+tarafından önbelleğe alınmaz. Görünür cüzdan 45 saniyede bir, odak geri geldiğinde
+ve elle yenilenir; kapalı sekmede cüzdan isteği gönderilmez.
+
+12 kasa, 2.000 hareket sınırı vardır; arayüz 30'ar hareket gösterir. Gelecek tarih,
+geçersiz tutar ve başka kişinin kasasına aktarım reddedilir. Hareketi olan kasayı
+silmek için önce hareketler silinmeli veya diğer kasaya düzenlenmelidir. Örnek
+kayıtlar yalnızca yerel önizlemededir; üretim boş cüzdanla başlar.
+
 ### İndirim defteri
 
 Ana sayfadaki İndirim defterimiz kartı `/#prices` bölümünü açar. Yalnızca Gratis

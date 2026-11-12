@@ -319,7 +319,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function restoreTab(){
-  const validTabs = ['home', 'memories', 'bucket', 'special', 'chat', 'settings', 'prices'];
+  const validTabs = ['home', 'memories', 'bucket', 'special', 'chat', 'settings', 'prices', 'wallet'];
   let target = location.hash.slice(1);
   if(!validTabs.includes(target)){
     try{ target = localStorage.getItem('biz-last-tab'); }catch(error){}
